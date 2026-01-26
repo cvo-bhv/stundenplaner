@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stundenplan Masterclass (Grid Fix)</title>
+    <title>SopädStundenplaner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -37,7 +37,7 @@
         }
         .blocked-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 2px dashed #f87171; pointer-events: none; z-index: 20; }
 
-        .subject-btn { transition: all 0.1s; }
+        .subject-btn { transition: all 0.1s; user-select: none; }
         .subject-btn:active { transform: scale(0.95); }
 
         /* Chips - Optimized for Layout */
@@ -212,6 +212,37 @@
             padding-top: 0;
             padding-bottom: 0;
         }
+
+        /* BLOCKING MODE VISUALS */
+        .blocking-banner {
+            display: none;
+            background-color: #ef4444; /* Red 500 */
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: -1px; /* Connect to table */
+            z-index: 50;
+            animation: pulse-red 2s infinite;
+        }
+        
+        /* When active, banner shows and table gets border */
+        body.blocking-active .blocking-banner {
+            display: block;
+        }
+        body.blocking-active #mainTimetable {
+            border: 4px solid #ef4444 !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        @keyframes pulse-red {
+            0% { background-color: #ef4444; }
+            50% { background-color: #b91c1c; } /* Red 700 */
+            100% { background-color: #ef4444; }
+        }
+
 
         /* TOUR STYLES */
         .tour-overlay {
@@ -480,19 +511,58 @@
         </div>
     </div>
 
+    <!-- NEW MAGIC SETTINGS MODAL (Advanced) -->
     <div id="magicSettingsModal" class="modal-overlay">
-        <div class="modal-box">
-            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-cogs mr-2 text-gray-500"></i> Fächer-Auswahl</h3>
-            <div id="magicSettingsGrid" class="grid grid-cols-3 gap-2 mb-6 max-h-[50vh] overflow-y-auto"></div>
+        <div class="modal-box max-w-lg">
+            <h3 class="text-lg font-bold text-gray-900 mb-2 flex items-center"><i class="fas fa-cogs mr-2 text-gray-500"></i> Fächer verwalten</h3>
+            <p class="text-sm text-gray-500 mb-4 leading-relaxed">
+                <strong>Wofür ist das?</strong> Hier definierst du deinen persönlichen Fächer-Pool.<br>
+                👁️ <strong>Auge:</strong> Zeigt das Fach in der linken Seitenleiste an.<br>
+                ✨ <strong>Haken:</strong> Dieses Fach wird beim Klick auf "Auto" automatisch verteilt.
+            </p>
+            
+            <!-- ADD NEW SUBJECT / SEARCH -->
+            <div class="flex gap-2 mb-2 bg-gray-50 p-2 rounded border border-gray-200">
+                <input type="text" id="newSubjectInput" placeholder="Suchen oder neu..." class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500" onkeypress="handleNewSubjectEnter(event)" oninput="filterMagicSettings(this.value)">
+                <button onclick="addNewSubject()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold"><i class="fas fa-plus"></i></button>
+            </div>
+            
+            <!-- ADD NEW: QUICK ACTIONS -->
+            <div class="flex gap-2 mb-4">
+                <button onclick="deselectAllMagic()" class="flex-1 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 py-1.5 rounded text-xs font-bold shadow-sm transition">
+                    <i class="fas fa-square mr-1"></i> Auto-Auswahl aufheben
+                </button>
+                <button onclick="showAllSubjects()" class="flex-1 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 py-1.5 rounded text-xs font-bold shadow-sm transition">
+                    <i class="fas fa-eye mr-1"></i> Alle einblenden
+                </button>
+            </div>
+
+            <!-- Header for List -->
+            <div class="flex justify-between items-center px-2 mb-2 text-xs font-bold text-gray-500 border-b border-gray-100 pb-1">
+                <span class="uppercase">Fachname</span>
+                <div class="flex items-center gap-4 mr-8">
+                    <span title="Sichtbar" class="w-6 text-center text-base"><i class="fas fa-eye"></i></span>
+                    <span title="Auto-Verteilung" class="w-4 text-center text-base"><i class="fas fa-check-square"></i></span>
+                </div>
+            </div>
+
+            <!-- LIST -->
+            <div id="magicSettingsList" class="space-y-1 mb-6 max-h-[50vh] overflow-y-auto pr-2"></div>
+            
             <div class="flex justify-end gap-3">
-                <button onclick="closeMagicSettings()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Abbrechen</button>
-                <button onclick="saveMagicSettings()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded font-bold">Speichern</button>
+                <button onclick="closeMagicSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold">Fertig</button>
             </div>
         </div>
     </div>
+
     <div id="rulesModal" class="modal-overlay">
         <div class="modal-box max-w-xl">
-            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-list-ol mr-2 text-blue-500"></i> Regeln</h3>
+            <h3 class="text-lg font-bold text-gray-900 mb-2 flex items-center"><i class="fas fa-list-ol mr-2 text-blue-500"></i> Regeln</h3>
+            <p class="text-sm text-gray-500 mb-4 leading-relaxed">
+                Hier kannst du der Automatik feste Vorgaben geben. <br>
+                <em>Beispiel:</em> "Die Klasse 6a braucht zwingend 4 Stunden Mathe."<br>
+                Sinnvoll, wenn die Automatik ein Fach zu oft oder zu selten verplant.
+            </p>
             <div class="flex gap-2 mb-4 items-end bg-gray-50 p-2 rounded border border-gray-200">
                 <div class="flex-1"><label class="block text-[10px] uppercase text-gray-500 font-bold mb-1">Klasse</label><select id="ruleClassSelect" class="w-full text-sm border-gray-300 rounded p-1"></select></div>
                 <div class="flex-1"><label class="block text-[10px] uppercase text-gray-500 font-bold mb-1">Fach</label><select id="ruleSubjectSelect" class="w-full text-sm border-gray-300 rounded p-1"></select></div>
@@ -514,9 +584,10 @@
                 <h3>1. Der Schnellstart 🚀</h3>
                 <ol>
                     <li><strong>Persönliche Daten:</strong> Trage oben deinen Namen, Jahrgang und Schuljahr ein.</li>
-                    <li><strong>Klassen anlegen:</strong> Tippe den Namen einer Klasse (z.B. <code>6a</code>) ein und drücke <code>Enter</code>.</li>
-                    <li><strong>Stunden-Ziel:</strong> Gib im gelben Bereich ein, wie viele Stunden du unterrichten möchtest.</li>
-                    <li><strong>Fächer wählen:</strong> Klicke auf das Zahnrad (<code>Fächer</code>), um deine Fächer festzulegen.</li>
+                    <li><strong>Klassen anlegen:</strong> Erstelle <strong>alle</strong> deine Klassen nacheinander (z.B. <code>6a</code> eingeben, Enter drücken, dann <code>6b</code>...).</li>
+                    <li><strong>Stundenplan füllen:</strong> Wähle eine Klasse aus (Klick auf den Namen). Klicke dann links auf ein Fach. Der Planer füllt Montag 1. Std und springt automatisch weiter.</li>
+                    <li><strong>Nächste Klasse:</strong> Wenn du fertig bist, wähle die nächste Klasse und wiederhole den Vorgang.</li>
+                    <li><strong>Fächer wählen:</strong> Klicke auf das Zahnrad (<code>Fächer</code>), um auszuwählen, in welchen Fächern du dabei sein möchtest. <em>Hinweis:</em> Die Hauptfächer sind vorselektiert, können aber abgewählt werden.</li>
                 </ol>
 
                 <h3>2. Manuelle Planung & "Anpinnen" 📌</h3>
@@ -532,17 +603,25 @@
                     <li><strong>Lösen:</strong> Klicke erneut darauf, um die Fixierung aufzuheben.</li>
                 </ul>
 
-                <h3>3. Sperrzeiten (⛔)</h3>
+                <h3>3. Fächer verwalten & Ausblenden 👁️</h3>
+                <p>Damit du den Überblick behältst (weniger ist mehr!):</p>
+                <ul>
+                    <li><strong>Ausblenden (Rechtsklick):</strong> Mache einen Rechtsklick auf ein Fach in der linken Leiste, um es sofort auszublenden.</li>
+                    <li><strong>Verwalten (Zahnrad):</strong> Im Fächer-Menü kannst du ausgeblendete Fächer wieder sichtbar machen (Augen-Symbol).</li>
+                    <li><strong>Warum?</strong> Wenn du z.B. nur im Jahrgang 6 unterrichtest, brauchst du keine Chemie-Oberstufe in der Liste.</li>
+                </ul>
+
+                <h3>4. Sperrzeiten (⛔)</h3>
                 <ol>
                     <li>Klicke auf den Button <strong>Sperren</strong>.</li>
                     <li>Klicke auf die Stunden im Plan, die du blockieren möchtest.</li>
                     <li>Klicke erneut auf den Sperren-Button, um den Modus zu beenden.</li>
                 </ol>
 
-                <h3>4. Auto-Verteilung ✨</h3>
+                <h3>5. Auto-Verteilung ✨</h3>
                 <p>Klicke auf den <strong>"Auto"-Button</strong>. Der Algorithmus füllt deinen Plan auf und achtet streng auf eine faire Verteilung zwischen den Klassen.</p>
 
-                <h3>5. Speichern & Drucken 🖨️</h3>
+                <h3>6. Speichern & Drucken 🖨️</h3>
                 <ul>
                     <li><strong>Speichern (💾):</strong> Sichert deinen Plan als Datei auf dem Gerät.</li>
                     <li><strong>Laden (📂):</strong> Lädt eine gespeicherte Datei.</li>
@@ -563,9 +642,10 @@
     <!-- SIDEBAR -->
     <aside class="w-80 bg-white shadow-xl z-30 flex flex-col h-full border-r border-gray-200 flex-shrink-0 no-print">
         <div class="p-4 border-b border-gray-100 bg-gray-50">
-            <div class="flex justify-between items-center mb-3">
-                <h1 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-layer-group text-blue-600 mr-2"></i> Planer</h1>
-                <div class="flex gap-1" id="toolbarActions">
+            <!-- UPDATED LAYOUT FOR HEADER -->
+            <div class="flex flex-col mb-3">
+                <h1 class="text-lg font-bold text-gray-800 flex items-center mb-2"><i class="fas fa-layer-group text-blue-600 mr-2"></i> SopädStundenplaner</h1>
+                <div class="flex gap-1 justify-end w-full" id="toolbarActions">
                     <button onclick="exportToFile()" class="text-emerald-600 hover:bg-emerald-100 p-2 rounded transition" title="Datei speichern"><i class="fas fa-save"></i></button>
                     <button onclick="document.getElementById('importFile').click()" class="text-blue-600 hover:bg-blue-100 p-2 rounded transition" title="Datei laden"><i class="fas fa-folder-open"></i></button>
                     <input type="file" id="importFile" class="hidden" accept=".json" onchange="importFromFile(this)">
@@ -599,9 +679,13 @@
         <div class="flex-1 overflow-y-auto p-4 space-y-6">
             <div class="bg-amber-50 border border-amber-200 rounded-lg p-3" id="targetHoursSection">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-bold text-amber-800 uppercase">Sonderpädagoge</span>
+                    <span class="text-xs font-bold text-amber-800 uppercase">Unterrichtsstunden</span>
                     <input type="number" id="teacherHours" value="27" min="1" max="40" onchange="updateLiveStats()" class="w-12 text-sm text-center border border-amber-300 rounded bg-white">
                 </div>
+                
+                <!-- Helper Text for Menus -->
+                <div class="text-[10px] text-amber-800 mb-1 opacity-80 text-center font-medium">Konfiguration: Sperren, Regeln, Fächer & Bericht</div>
+                
                 <div class="grid grid-cols-4 gap-2 mb-2">
                     <button id="blockToggleBtn" onclick="toggleBlockingMode()" class="bg-white border border-red-300 text-red-500 hover:bg-red-50 p-2 rounded text-xs flex justify-center" title="Sperren"><i class="fas fa-ban"></i></button>
                     <button id="btnRules" onclick="openRulesModal()" class="bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 p-2 rounded text-xs flex justify-center" title="Regeln"><i class="fas fa-list-ol"></i></button>
@@ -618,7 +702,7 @@
                     <span class="text-xs font-bold text-gray-500 uppercase">Fächer</span>
                     <span id="selectedClassDisplay" class="text-xs font-bold text-blue-600 h-4"></span>
                 </div>
-                <div class="grid grid-cols-3 gap-2" id="subjectGrid"></div>
+                <div class="grid grid-cols-4 gap-1" id="subjectGrid"></div>
             </div>
             <div>
                 <span class="text-xs font-bold text-gray-500 uppercase block mb-2">Navigation</span>
@@ -635,17 +719,31 @@
                 </div>
             </div>
         </div>
-        <div class="p-3 bg-slate-50 border-t border-gray-200" id="statsFooter">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-xs font-bold text-slate-700 uppercase">Verteilung</span>
-                <span id="totalAssignedBadge" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">0/27</span>
+        
+        <!-- NEW EXPANDABLE STATS FOOTER -->
+        <div class="p-3 bg-slate-50 border-t border-gray-200 flex flex-col flex-shrink-0" id="statsFooter">
+            <div class="flex justify-between items-center mb-2 cursor-pointer" onclick="toggleStatsPanel()">
+                <div class="flex items-center">
+                    <span class="text-xs font-bold text-slate-700 uppercase mr-2">Verteilung</span>
+                    <span id="totalAssignedBadge" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">0/27</span>
+                </div>
+                <button class="text-gray-400 hover:text-gray-700 transition-transform duration-300" id="statsToggleBtn">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
             </div>
-            <div id="liveStatsContent" class="text-xs text-gray-600 max-h-32 overflow-y-auto pr-1"><p class="text-gray-400 italic text-center py-2">Leer</p></div>
+            <div id="liveStatsContent" class="text-xs text-gray-600 max-h-32 overflow-y-auto pr-1 transition-all duration-300 ease-in-out">
+                <p class="text-gray-400 italic text-center py-2">Leer</p>
+            </div>
         </div>
     </aside>
 
     <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-gray-100 p-4 print:p-0">
+        <!-- Banner for Blocking Mode -->
+        <div id="blockingBanner" class="blocking-banner">
+            <i class="fas fa-hand-paper mr-2"></i>SPERR-MODUS AKTIV - Markiere die Flächen, in denen du nicht arbeiten kannst
+        </div>
+
         <div id="mainTimetable" class="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-300 flex-1 flex flex-col print:border-none print:shadow-none">
             <div class="grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] bg-slate-800 text-white text-center font-bold text-sm shadow-md z-10 flex-shrink-0">
                 <div class="p-2 border-r border-slate-600">Zeit</div>
@@ -671,10 +769,31 @@
         }
 
         // --- 1. CONFIGURATION ---
-        const subjects = ["MAT", "DEU", "ENG", "MAT-G", "MAT-E", "ENG-G", "ENG-E", "NAT", "BIO", "CHE-G", "PHY-G", "PHY-E", "GGP", "SOZ", "WAT", "REL", "KUN", "MUS", "GSE", "SPO", "CARE", "WPF/SPA/TUE", "IPAD", "RAT", "MIT", "SOL", "FÖA", "KS", "---"];
+        // NEW: allSubjects from user provided list
+        let allSubjects = [
+            "BIO", "BSO", "CARE", "CHE-E", "CHE-G", "DEU", "DEU-E", "DEU-G", 
+            "ENG", "ENG-E", "ENG-G", "FÖA", "GGP", "GSE", "IPAD", "KS", "KUN", 
+            "MAT", "MAT-E", "MAT-G", "MEN", "MUS", "NAT", "PHY-E", "PHY-G", 
+            "RAT", "REL", "SOL", "SOZ", "SPA", "SPO", "TUE", "WAT", "WPF", "---"
+        ];
+        
+        // Custom Color Map
+        const subjectColors = {
+            "BIO": "#6BE5C3", "BSO": "#D97C34", "CARE": "#C4A661", "CHE-E": "#9B30FF",
+            "CHE-G": "#702090", "DEU": "#D97C34", "DEU-E": "#3B5CD7", "DEU-G": "#8B5742",
+            "ENG": "#9D4EDD", "ENG-E": "#6E8B3D", "ENG-G": "#245837", "FÖA": "#BD805C",
+            "GGP": "#E0C3FC", "GSE": "#9CCF5E", "IPAD": "#C4A661", "KS": "#5AFF5A",
+            "KUN": "#1A4035", "MAT": "#5AFF5A", "MAT-E": "#BA3628", "MAT-G": "#245837",
+            "MEN": "#F53DF5", "MUS": "#D1458F", "NAT": "#7B92B6", "PHY-E": "#D040B0",
+            "PHY-G": "#4B70C0", "RAT": "#3B5CD7", "REL": "#D97C34", "SOL": "#D97C34",
+            "SOZ": "#D97C34", "SPA": "#D97C34", "SPO": "#682568", "TUE": "#BD805C",
+            "WAT": "#BA3628", "WPF": "#5D6D7E"
+        };
+        
         const EXCLUDED_LOWER_GRADE_SUBJECTS = ["MAT-G", "MAT-E", "ENG-G", "ENG-E", "BIO", "CHE-G", "CHE-E", "PHY-G", "PHY-E", "SOZ", "REL"];
         const MAIN_SUBJECT_KEYS = ["MAT", "DEU", "ENG"];
-        const GLOBAL_SUBJECTS = ["FÖA", "WPF/SPA/TUE"];
+        // Updated GLOBAL_SUBJECTS to include individual codes instead of combo
+        const GLOBAL_SUBJECTS = ["FÖA", "WPF", "SPA", "TUE", "MEN"];
         
         // 6 DISTINCT COLORS (a-f)
         const classColors = [
@@ -690,6 +809,9 @@
 
         // --- 2. STATE ---
         let classes = []; let selectedClassIndex = -1; let timetableData = {}; let blockedSlots = new Set(); let cursor = { day: 0, period: 1 }; let isBlockingMode = false; let magicSubjectKeys = ["MAT", "DEU", "ENG"]; let magicRules = []; let lastResultData = null; let confirmCallback = null;
+        
+        // NEW: State for hidden subjects
+        let hiddenSubjects = new Set();
 
         // --- 3. UTILS ---
         function getColorForClass(className) {
@@ -701,10 +823,14 @@
         }
 
         function showToast(msg, isError = false) { const t = document.getElementById('toast'); const tm = document.getElementById('toastMsg'); tm.textContent = msg; t.className = isError ? 'toast error show' : 'toast show'; setTimeout(() => { t.classList.remove('show'); }, 3000); }
-        function requestClearTimetable() { document.getElementById('confirmText').textContent = "Möchtest du wirklich den gesamten Stundenplan löschen?"; document.getElementById('confirmModal').classList.add('show'); confirmCallback = () => { timetableData = {}; blockedSlots = new Set(); lastResultData = null; magicRules = []; renderTimetable(); updateLiveStats(); showToast("Plan gelöscht."); }; }
+        function requestClearTimetable() { 
+            disableBlockingMode(); 
+            document.getElementById('confirmText').textContent = "Möchtest du wirklich den gesamten Stundenplan löschen?"; document.getElementById('confirmModal').classList.add('show'); confirmCallback = () => { timetableData = {}; blockedSlots = new Set(); lastResultData = null; magicRules = []; renderTimetable(); updateLiveStats(); showToast("Plan gelöscht."); }; 
+        }
         function closeConfirm(result) { document.getElementById('confirmModal').classList.remove('show'); if (result && confirmCallback) confirmCallback(); confirmCallback = null; }
         
         function openPrintPreview() {
+            disableBlockingMode();
             let html = '';
             // Get inputs
             const name = document.getElementById('teacherNameInput').value || '_______________';
@@ -747,7 +873,7 @@
                              // Add specific class for gray styling
                              let styleClass = 'global-chip';
                              if (globalEntry.subject === 'FÖA') styleClass += ' special-foea';
-                             else if (globalEntry.subject === 'WPF/SPA/TUE') styleClass += ' special-wpf';
+                             else if (['WPF', 'SPA', 'TUE'].includes(globalEntry.subject)) styleClass += ' special-wpf';
                              
                              cellContent = `<div class="print-cell-content ${styleClass}"><span class="preview-subject">${globalEntry.subject}</span><span class="preview-class">${allClassesString}</span></div>`;
                         }
@@ -784,8 +910,8 @@
         const tourSteps = [
             { 
                 targetId: null, 
-                title: "Willkommen beim Masterclass Planer!", 
-                text: "Dieses Tool beherrscht zwei Dinge: 1. Das manuelle Erstellen von Stundenplänen. 2. Die 'Auto-Magie' für faire Verteilungen." 
+                title: "Willkommen beim SopädStundenplaner!", 
+                text: "Dieses Tool beherrscht zwei Dinge: 1. Das manuelle Erstellen von Stundenplänen. 2. Die automatische Erstellung und Kombination von mehreren Stundenplänen." 
             },
             { 
                 targetId: "personalDataSection", 
@@ -795,12 +921,12 @@
             { 
                 targetId: "classInputSection", 
                 title: "2. Klassen anlegen", 
-                text: "Gib hier deine Klassen ein (z.B. 6a) und drücke Enter. Jede Klasse bekommt automatisch eine eigene Farbe." 
+                text: "Erstelle hier nacheinander alle deine Klassen (z.B. 6a, 6b...) und bestätige jeweils mit Enter." 
             },
             { 
                 targetId: "subjectSection", 
                 title: "3. Manuelles Ausfüllen", 
-                text: "Übertrage nun deinen Basis-Plan: 1. Fach links antippen. 2. Im Plan die Stunde klicken. Der Cursor springt automatisch weiter – so bist du blitzschnell fertig." 
+                text: "Wähle oben eine Klasse aus. Tippe dann hier links ein Fach an. Der Planer beginnt bei Mo-1.Std und springt automatisch weiter. Fertig? Dann wähle die nächste Klasse." 
             },
             { 
                 targetId: "mainTimetable", 
@@ -815,7 +941,7 @@
              { 
                 targetId: "btnMagicSettings", 
                 title: "6. Fächer-Pool", 
-                text: "Hinter dem Zahnrad verbirgt sich die Fächerauswahl. Hier hakst du an, welche Fächer der Algorithmus überhaupt verteilen darf." 
+                text: "Hinter dem Zahnrad verbirgt sich die Fächerauswahl. Hier kannst du neue Fächer anlegen oder nicht benötigte Fächer ausblenden, um die Übersicht zu behalten (z.B. Fächer anderer Jahrgänge)."
             },
              { 
                 targetId: "btnRules", 
@@ -946,7 +1072,7 @@
         }
 
         function exportToFile() {
-            // UPDATED EXPORT TO INCLUDE SCHOOL YEAR
+            // UPDATED EXPORT TO INCLUDE SCHOOL YEAR AND HIDDEN SUBJECTS
             const data = { 
                 classes, 
                 timetableData, 
@@ -956,7 +1082,10 @@
                 teacherHours: document.getElementById('teacherHours').value, 
                 teacherName: document.getElementById('teacherNameInput').value, 
                 gradeLevel: document.getElementById('gradeLevelInput').value,
-                schoolYear: document.getElementById('schoolYearInput').value // New field
+                schoolYear: document.getElementById('schoolYearInput').value,
+                // NEW EXPORTS
+                allSubjects,
+                hiddenSubjects: Array.from(hiddenSubjects)
             };
             const json = JSON.stringify(data, null, 2);
             const blob = new Blob([json], { type: "application/json" });
@@ -973,7 +1102,11 @@
                     if(data.teacherHours) document.getElementById('teacherHours').value = data.teacherHours;
                     if(data.teacherName) document.getElementById('teacherNameInput').value = data.teacherName;
                     if(data.gradeLevel) document.getElementById('gradeLevelInput').value = data.gradeLevel;
-                    if(data.schoolYear) document.getElementById('schoolYearInput').value = data.schoolYear; // Import School Year
+                    if(data.schoolYear) document.getElementById('schoolYearInput').value = data.schoolYear;
+                    
+                    // NEW IMPORTS
+                    if(data.allSubjects) allSubjects = data.allSubjects;
+                    if(data.hiddenSubjects) hiddenSubjects = new Set(data.hiddenSubjects);
                     
                     renderClasses(); if (classes.length > 0) selectClass(0); else selectedClassIndex = -1; renderTimetable(); updateLiveStats(); showToast("Plan importiert!");
                 } catch (err) { showToast("Fehler beim Import: " + err.message, true); }
@@ -982,8 +1115,26 @@
             reader.readAsText(file);
         }
 
-        function toggleStatsPanel() { const panel = document.getElementById('liveStatsPanel'); const chevron = document.getElementById('statsChevron'); panel.classList.toggle('minimized'); if(panel.classList.contains('minimized')) chevron.classList.remove('rotate-180'); else chevron.classList.add('rotate-180'); }
-        function openStatsPanel() { const panel = document.getElementById('liveStatsPanel'); const chevron = document.getElementById('statsChevron'); panel.classList.remove('minimized'); chevron.classList.add('rotate-180'); }
+        // NEW: Toggle Stats Panel Logic
+        function toggleStatsPanel(forceOpen = null) { 
+            const content = document.getElementById('liveStatsContent'); 
+            const btn = document.getElementById('statsToggleBtn');
+            const isCurrentlyExpanded = content.classList.contains('h-[60vh]');
+            
+            let shouldOpen = forceOpen !== null ? forceOpen : !isCurrentlyExpanded;
+
+            if (shouldOpen) {
+                // EXPAND
+                content.classList.remove('max-h-32');
+                content.classList.add('h-[60vh]');
+                btn.classList.add('rotate-180');
+            } else {
+                // COLLAPSE
+                content.classList.remove('h-[60vh]');
+                content.classList.add('max-h-32');
+                btn.classList.remove('rotate-180');
+            }
+        }
         
         function updateRulesFromPin(className, subject) {
             let pinCount = 0; for (const key in timetableData) { timetableData[key].forEach(e => { if (e.isManual && e.className === className && e.subject === subject) pinCount++; }); }
@@ -992,15 +1143,225 @@
             if(document.getElementById('rulesModal').classList.contains('show')) renderRuleList();
         }
 
-        function openRulesModal() { if (classes.length === 0) { showToast("Bitte erst Klassen erstellen!", true); return; } updateRuleFormOptions(); renderRuleList(); document.getElementById('rulesModal').classList.add('show'); }
+        // --- NEW SMART RULE LOGIC ---
+        function openRulesModal() { 
+            disableBlockingMode();
+            if (classes.length === 0) { showToast("Bitte erst Klassen erstellen!", true); return; } 
+            updateRuleFormOptions(); 
+            renderRuleList(); 
+            document.getElementById('rulesModal').classList.add('show'); 
+        }
+
         function closeRulesModal() { document.getElementById('rulesModal').classList.remove('show'); }
-        function updateRuleFormOptions() { document.getElementById('ruleClassSelect').innerHTML = classes.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); document.getElementById('ruleSubjectSelect').innerHTML = subjects.filter(s => s !== '---').map(s => `<option value="${s}">${s}</option>`).join(''); }
+        
+        function updateRuleFormOptions() { 
+            const classSelect = document.getElementById('ruleClassSelect');
+            classSelect.innerHTML = classes.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); 
+            
+            // NEW: Auto-select active class from sidebar
+            if(selectedClassIndex > -1 && classes[selectedClassIndex]) {
+                classSelect.value = classes[selectedClassIndex].name;
+            }
+
+            // NEW: Add Listener for dynamic updates
+            classSelect.onchange = updateRuleSubjectOptions;
+            
+            // Trigger subject update initially
+            updateRuleSubjectOptions(); 
+        }
+
+        function updateRuleSubjectOptions() {
+            const classSelect = document.getElementById('ruleClassSelect');
+            const subjectSelect = document.getElementById('ruleSubjectSelect');
+            const className = classSelect.value;
+            
+            if(!className) {
+                subjectSelect.innerHTML = '';
+                return;
+            }
+
+            // FILTER: Find only subjects used in the timetable for this class
+            const usedSubjects = new Set();
+            for(const key in timetableData) {
+                timetableData[key].forEach(entry => {
+                    if(entry.className === className && entry.subject !== '---') {
+                        usedSubjects.add(entry.subject);
+                    }
+                });
+            }
+
+            const sorted = Array.from(usedSubjects).sort();
+            
+            if(sorted.length === 0) {
+                 subjectSelect.innerHTML = '<option value="">(Keine Fächer im Plan)</option>';
+            } else {
+                 subjectSelect.innerHTML = sorted.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+        }
+
         function addRule() { const c = document.getElementById('ruleClassSelect').value; const s = document.getElementById('ruleSubjectSelect').value; const h = parseInt(document.getElementById('ruleCountInput').value); if (!c || !s || !h) return; const existingIdx = magicRules.findIndex(r => r.className === c && r.subject === s); if (existingIdx > -1) magicRules[existingIdx].hours = h; else magicRules.push({ className: c, subject: s, hours: h }); renderRuleList(); }
         function deleteRule(index) { magicRules.splice(index, 1); renderRuleList(); }
         function renderRuleList() { const list = document.getElementById('ruleList'); list.innerHTML = ''; if (magicRules.length === 0) { list.innerHTML = '<div class="text-center text-gray-400 italic text-sm py-4">Keine Regeln definiert.</div>'; return; } magicRules.forEach((r, idx) => { const div = document.createElement('div'); div.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-200 shadow-sm"; div.innerHTML = `<div class="flex items-center gap-2 text-sm"><span class="font-bold text-gray-800 bg-gray-100 px-2 rounded">${r.className}</span><span class="text-gray-600">${r.subject}</span><span class="text-blue-600 font-bold ml-2">Min: ${r.hours} Std.</span></div><button onclick="deleteRule(${idx})" class="text-red-400 hover:text-red-600 px-2"><i class="fas fa-trash"></i></button>`; list.appendChild(div); }); }
 
-        function openMagicSettings() { const grid = document.getElementById('magicSettingsGrid'); grid.innerHTML = ''; subjects.filter(s => s !== '---').forEach(subj => { const isChecked = magicSubjectKeys.includes(subj); const div = document.createElement('div'); div.className = "flex items-center space-x-2"; div.innerHTML = `<input type="checkbox" id="chk_${subj}" value="${subj}" ${isChecked ? 'checked' : ''} class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500 border-gray-300"><label for="chk_${subj}" class="text-sm text-gray-700 cursor-pointer select-none">${subj}</label>`; grid.appendChild(div); }); document.getElementById('magicSettingsModal').classList.add('show'); }
-        function saveMagicSettings() { const checkboxes = document.querySelectorAll('#magicSettingsGrid input[type="checkbox"]'); const newSelection = []; checkboxes.forEach(cb => { if(cb.checked) newSelection.push(cb.value); }); magicSubjectKeys = newSelection; closeMagicSettings(); showToast("Einstellungen gespeichert."); }
+        // --- NEW SUBJECT MANAGEMENT LOGIC ---
+
+        function handleNewSubjectEnter(e) { if(e.key === 'Enter') addNewSubject(); }
+        
+        function addNewSubject() {
+            const input = document.getElementById('newSubjectInput');
+            const val = input.value.trim().toUpperCase();
+            if(!val) return;
+            
+            if(allSubjects.includes(val)) {
+                showToast("Fach existiert bereits!", true);
+                return;
+            }
+            
+            allSubjects.push(val);
+            input.value = '';
+            
+            // Re-render settings list, clear filter
+            renderMagicSettingsList(); 
+            renderSubjects(); // Update sidebar immediately
+            showToast("Fach hinzugefügt: " + val);
+        }
+        
+        // NEW: Filter function for the settings list
+        function filterMagicSettings(query) {
+            renderMagicSettingsList(query);
+        }
+
+        function deleteCustomSubject(subj) {
+             if(confirm(`Fach "${subj}" wirklich löschen?`)) {
+                 allSubjects = allSubjects.filter(s => s !== subj);
+                 // Also clean up hidden and magic arrays
+                 hiddenSubjects.delete(subj);
+                 magicSubjectKeys = magicSubjectKeys.filter(s => s !== subj);
+                 
+                 // Re-render, keeping current filter if input has value
+                 const currentFilter = document.getElementById('newSubjectInput').value;
+                 renderMagicSettingsList(currentFilter);
+                 renderSubjects();
+             }
+        }
+        
+        function toggleSubjectVisibility(subj) {
+            if(hiddenSubjects.has(subj)) {
+                hiddenSubjects.delete(subj);
+            } else {
+                hiddenSubjects.add(subj);
+            }
+            // Re-render, keeping current filter
+            const currentFilter = document.getElementById('newSubjectInput').value;
+            renderMagicSettingsList(currentFilter);
+            renderSubjects(); // Update main sidebar
+        }
+        
+        // NEW HELPER FUNCTIONS FOR BULK ACTIONS
+        function deselectAllMagic() {
+            magicSubjectKeys = [];
+            // Re-render list
+            const currentFilter = document.getElementById('newSubjectInput').value;
+            renderMagicSettingsList(currentFilter);
+            showToast("Alle Auto-Haken entfernt.");
+        }
+        
+        function showAllSubjects() {
+            hiddenSubjects.clear();
+             // Re-render list
+            const currentFilter = document.getElementById('newSubjectInput').value;
+            renderMagicSettingsList(currentFilter);
+            renderSubjects(); // Update sidebar
+            showToast("Alle Fächer sichtbar.");
+        }
+
+        // Context Menu Handler for Sidebar
+        function hideSubject(e, subj) {
+            e.preventDefault(); // Stop normal context menu
+            if(subj === '---') return; // Cannot hide separator
+            
+            hiddenSubjects.add(subj);
+            renderSubjects();
+            showToast(`${subj} ausgeblendet (wiederherstellen über Zahnrad)`);
+        }
+
+        function openMagicSettings() { 
+            disableBlockingMode();
+            document.getElementById('magicSettingsModal').classList.add('show'); 
+            document.getElementById('newSubjectInput').value = ''; // Clear filter on open
+            document.getElementById('newSubjectInput').focus();
+            renderMagicSettingsList();
+        }
+
+        // HELPER FOR VISIBILITY
+        function isSubjectVisible(subj) {
+            return !hiddenSubjects.has(subj);
+        }
+        
+        function renderMagicSettingsList(filterText = '') {
+            const list = document.getElementById('magicSettingsList'); 
+            list.innerHTML = ''; 
+            
+            const upperFilter = filterText.toUpperCase().trim();
+
+            allSubjects.filter(s => s !== '---').forEach(subj => { 
+                // FILTER LOGIC
+                if(upperFilter && !subj.includes(upperFilter)) return;
+
+                const isChecked = magicSubjectKeys.includes(subj); 
+                
+                // VISIBILITY LOGIC (USING HELPER + LOCAL GRADE CHECK)
+                const isVisible = isSubjectVisible(subj);
+                
+                // Base Styling
+                let rowClass = "flex justify-between items-center p-2 rounded hover:bg-gray-50 border-b border-gray-100 last:border-0";
+                if (!isVisible) rowClass += " bg-gray-100 opacity-75"; // Visual cue for hidden
+                
+                const div = document.createElement('div'); 
+                div.className = rowClass;
+                
+                // Checkbox for MAGIC (Right side)
+                // UPDATED: Added opacity and pointer-events-none if hidden
+                const checkStyle = isVisible ? '' : 'opacity-20 pointer-events-none';
+                const magicCheck = `<input type="checkbox" onchange="toggleMagicKey('${subj}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500 border-gray-300 ${checkStyle}">`;
+                
+                // Toggle for VISIBILITY (Eye)
+                const visIcon = isVisible ? 'fa-eye text-gray-600' : 'fa-eye-slash text-gray-400';
+                const visBtn = `<button onclick="toggleSubjectVisibility('${subj}')" class="w-6 text-center hover:bg-gray-200 rounded p-0.5"><i class="fas ${visIcon}"></i></button>`;
+                
+                // Delete button (Only for non-default? For now allow all, but maybe warn. Actually let's allow all for flexibility)
+                const deleteBtn = `<button onclick="deleteCustomSubject('${subj}')" class="text-gray-300 hover:text-red-500 ml-2 w-4"><i class="fas fa-trash-alt text-xs"></i></button>`;
+
+                div.innerHTML = `
+                    <span class="text-sm font-medium ${!isVisible ? 'text-gray-500 line-through' : 'text-gray-700'}">${subj}</span>
+                    <div class="flex items-center gap-4">
+                        ${visBtn}
+                        ${magicCheck}
+                        ${deleteBtn}
+                    </div>
+                `; 
+                list.appendChild(div); 
+            }); 
+            
+            if(list.children.length === 0 && filterText) {
+                list.innerHTML = `<div class="text-center text-gray-400 text-xs py-4">"${filterText}" nicht gefunden.<br>Drücke <b>+</b> zum Erstellen.</div>`;
+            }
+        }
+
+        function toggleMagicKey(subj) {
+            if(magicSubjectKeys.includes(subj)) {
+                magicSubjectKeys = magicSubjectKeys.filter(s => s !== subj);
+            } else {
+                magicSubjectKeys.push(subj);
+            }
+            // No need to re-render list, checkbox handles itself visually
+        }
+
+        function saveMagicSettings() { 
+            // Saving is live in this version, so just close
+            closeMagicSettings(); 
+            showToast("Einstellungen übernommen."); 
+        }
         function closeMagicSettings() { document.getElementById('magicSettingsModal').classList.remove('show'); }
         
         // --- 5. LOGIC & ALGORITHMS (TRUE FAIRNESS + REBALANCING V4) ---
@@ -1051,11 +1412,24 @@
         }
 
         function closeResult() { document.getElementById('resultModal').classList.remove('show'); }
-        function reopenResult() { showResult(null, null, document.getElementById('totalAssignedBadge').textContent.split('/')[0], document.getElementById('teacherHours').value); }
+        function reopenResult() { 
+            disableBlockingMode();
+            showResult(null, null, document.getElementById('totalAssignedBadge').textContent.split('/')[0], document.getElementById('teacherHours').value); 
+        }
+        
         function toggleBlockingMode() { isBlockingMode = !isBlockingMode; const btn = document.getElementById('blockToggleBtn'); if (isBlockingMode) { btn.classList.remove('bg-white', 'text-red-500'); btn.classList.add('bg-red-500', 'text-white'); btn.innerHTML = `<i class="fas fa-check"></i>`; document.body.classList.add('blocking-active'); } else { btn.classList.remove('bg-red-500', 'text-white'); btn.classList.add('bg-white', 'text-red-500'); btn.innerHTML = `<i class="fas fa-ban"></i>`; document.body.classList.remove('blocking-active'); } }
+        
+        // NEW Helper to auto-exit blocking mode
+        function disableBlockingMode() {
+            if (isBlockingMode) {
+                toggleBlockingMode();
+            }
+        }
+        
         function clearMagicSelection() { for (const key in timetableData) { timetableData[key].forEach(entry => { if (!entry.isManual) entry.isMagicSelected = false; }); } renderTimetable(); updateLiveStats(); }
         
         function runMagicAlgorithm() {
+            disableBlockingMode();
             clearMagicSelection();
             const targetHours = parseInt(document.getElementById('teacherHours').value) || 27;
             let currentAssigned = 0;
@@ -1074,7 +1448,9 @@
                         if (!teacherGrid[day][period]) { teacherGrid[day][period] = true; currentAssigned++; }
                     }
                     const isRuleSubject = magicRules.some(r => r.className === entry.className && r.subject === entry.subject);
-                    if (isMainSubject(entry.subject) || isRuleSubject || GLOBAL_SUBJECTS.includes(entry.subject)) { 
+                    
+                    // FIXED: Removed automatic inclusion of GLOBAL_SUBJECTS. Must be in magicSubjectKeys.
+                    if (isMainSubject(entry.subject) || isRuleSubject) { 
                         potentialSlotsCount++; 
                         if (blockedSlots.has(key)) blockedMissesCount++; 
                     }
@@ -1120,7 +1496,8 @@
                     const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
                     if (teacherGrid[day][period]) continue;
                     timetableData[key].forEach(e => {
-                        if ((isMainSubject(e.subject) || GLOBAL_SUBJECTS.includes(e.subject)) && !e.isManual && !e.isMagicSelected) {
+                        // FIXED: STRICT CHECK - Only user selected magic keys allowed
+                        if (isMainSubject(e.subject) && !e.isManual && !e.isMagicSelected) {
                             if(!GLOBAL_SUBJECTS.includes(e.subject)) activeClasses.add(e.className);
                         }
                     });
@@ -1136,7 +1513,8 @@
                     if (teacherGrid[day][period]) continue;
 
                     timetableData[key].forEach((entry, index) => {
-                        if ((isMainSubject(entry.subject) || GLOBAL_SUBJECTS.includes(entry.subject)) && !entry.isManual && !entry.isMagicSelected) {
+                        // FIXED: STRICT CHECK - Only user selected magic keys allowed
+                        if (isMainSubject(entry.subject) && !entry.isManual && !entry.isMagicSelected) {
                             let score = 0;
                             
                             // Special scoring for GLOBAL: They don't affect class balance directly, but help fill teacher schedule
@@ -1204,7 +1582,8 @@
                     let richClassName = null;
                     
                     timetableData[key].forEach((e, idx) => {
-                        if(e.isMagicSelected && !e.isManual && !GLOBAL_SUBJECTS.includes(e.subject)) {
+                        // FIXED: Added isMainSubject check just to be safe, though magicSelected implies it usually
+                        if(e.isMagicSelected && !e.isManual && !GLOBAL_SUBJECTS.includes(e.subject) && isMainSubject(e.subject)) {
                              if (currentCounts[e.className] > minH + 1) { 
                                  richIndex = idx;
                                  richClassName = e.className;
@@ -1248,6 +1627,8 @@
                 warning += `</div>`;
             }
             renderTimetable(); updateLiveStats(); showResult(null, null, currentAssigned, targetHours, warning);
+            // NEW: Automatically open stats panel after run
+            toggleStatsPanel(true);
         }
 
         // --- 6. RENDER FUNCTIONS ---
@@ -1266,14 +1647,36 @@
         
         function renderSubjects() {
             const grid = document.getElementById('subjectGrid'); grid.innerHTML = '';
-            let shouldFilter = false; if (selectedClassIndex > -1) { const className = classes[selectedClassIndex].name; if (className.startsWith('5') || className.startsWith('6')) shouldFilter = true; }
-            subjects.forEach(sub => {
-                if (shouldFilter && EXCLUDED_LOWER_GRADE_SUBJECTS.includes(sub)) return; 
+            
+            // Use allSubjects here, but filter hidden ones
+            allSubjects.forEach(sub => {
+                if(!isSubjectVisible(sub) && sub !== '---') return; 
+
                 const btn = document.createElement('button');
                 let fontSize = "text-sm"; if (sub.length > 5) fontSize = "text-xs"; if (sub.length > 10) fontSize = "text-[10px]";
-                btn.className = `subject-btn bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-2 rounded ${fontSize} shadow-sm truncate flex items-center justify-center`;
-                if (sub === '---') { btn.innerHTML = '<i class="fas fa-slash text-gray-400 rotate-90" style="font-size: 1.2em;"></i>'; btn.classList.add('border-gray-300', 'bg-gray-50'); } else { btn.textContent = sub; if (['MAT', 'DEU', 'ENG', 'MAT-G', 'MAT-E', 'ENG-E', 'ENG-G'].includes(sub)) btn.classList.add('border-l-4', 'border-l-blue-500'); else if (['NAT', 'BIO', 'CHE-G', 'PHY-G', 'PHY-E'].includes(sub)) btn.classList.add('border-l-4', 'border-l-green-500'); else if (['SPO', 'TUE', 'WPF/SPA/TUE'].includes(sub)) btn.classList.add('border-l-4', 'border-l-orange-500'); }
-                btn.onclick = () => insertSubject(sub); grid.appendChild(btn);
+                btn.className = `subject-btn bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-1 rounded ${fontSize} shadow-sm truncate flex items-center justify-center`;
+                
+                if (sub === '---') { 
+                    btn.innerHTML = '<i class="fas fa-slash text-gray-400 rotate-90" style="font-size: 1.2em;"></i>'; 
+                    btn.classList.add('border-gray-300', 'bg-gray-50'); 
+                } else { 
+                    btn.textContent = sub; 
+                    // COLOR LOGIC: Apply the border color from our map
+                    const color = subjectColors[sub];
+                    if(color) {
+                        // Apply custom border color via style for precision (Tailwind safe)
+                        btn.style.borderLeftWidth = '4px';
+                        btn.style.borderLeftColor = color;
+                    }
+                }
+                
+                // Add click handler
+                btn.onclick = () => insertSubject(sub); 
+                
+                // Add Context Menu Handler (Right Click)
+                btn.oncontextmenu = (e) => hideSubject(e, sub);
+
+                grid.appendChild(btn);
             });
         }
 
@@ -1301,7 +1704,7 @@
                  // Determine Specific Style Class
                  let styleClass = 'global-chip';
                  if (globalSelected.subject === 'FÖA') styleClass += ' special-foea';
-                 else if (globalSelected.subject === 'WPF/SPA/TUE') styleClass += ' special-wpf';
+                 else if (['WPF', 'SPA', 'TUE'].includes(globalSelected.subject)) styleClass += ' special-wpf';
                  
                  chip.className = `entry-chip ${styleClass}`;
                  
@@ -1347,7 +1750,7 @@
                 if (slot.type === 'break') {
                     const row = document.createElement('div'); 
                     row.className = "print-break grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] bg-gray-200 text-gray-500 border-b border-gray-300"; 
-                    row.innerHTML = `<div class="p-1 text-center text-[10px] flex flex-col justify-center font-mono border-r border-gray-300 bg-gray-300">${slot.start}<br>-<br>${slot.end}</div><div class="col-span-5 p-1 text-center font-bold tracking-widest text-[10px] uppercase flex items-center justify-center italic">${slot.label}</div>`; body.appendChild(row);
+                    row.innerHTML = `<div class="py-0.5 text-center text-[10px] flex flex-col justify-center font-mono border-r border-gray-300 bg-gray-300">${slot.start}<br>${slot.end}</div><div class="col-span-5 py-0.5 text-center font-bold tracking-widest text-[10px] uppercase flex items-center justify-center italic">${slot.label}</div>`; body.appendChild(row);
                 } else {
                     const row = document.createElement('div'); 
                     row.className = "print-lesson grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] border-b border-gray-300 min-h-[80px]"; 
@@ -1366,16 +1769,18 @@
         // --- 7. INTERACTIONS ---
         function handleClassEnter(e) { if (e.key === 'Enter') addClass(); }
         function addClass() {
+            disableBlockingMode();
             const input = document.getElementById('classInput'); const val = input.value.trim();
             if (val && !classes.some(c => c.name === val)) {
                 // FIXED: Use helper to get consistent color
                 const colorClass = getColorForClass(val); 
                 classes.push({ name: val, colorClass: colorClass });
-                if (val.startsWith('5') || val.startsWith('6')) { for (let d = 0; d < 5; d++) { const cellId = `d${d}-p5`; let entries = timetableData[cellId] || []; entries.push({ subject: "MIT", className: val, colorClass: colorClass, isMagicSelected: false, isManual: false }); timetableData[cellId] = entries; } renderTimetable(); } selectClass(classes.length - 1);
+                // UPDATED: Use MEN instead of MIT in demo fill for new classes
+                if (val.startsWith('5') || val.startsWith('6')) { for (let d = 0; d < 5; d++) { const cellId = `d${d}-p5`; let entries = timetableData[cellId] || []; entries.push({ subject: "MEN", className: val, colorClass: colorClass, isMagicSelected: false, isManual: false }); timetableData[cellId] = entries; } renderTimetable(); } selectClass(classes.length - 1);
             } input.value = ''; input.focus(); renderClasses();
         }
         function removeClass(index) { classes.splice(index, 1); if (selectedClassIndex >= index) selectedClassIndex = Math.max(0, selectedClassIndex - 1); if (classes.length === 0) selectedClassIndex = -1; renderClasses(); updateSelectedClassDisplay(); renderSubjects(); updateLiveStats(); }
-        function selectClass(index) { selectedClassIndex = index; renderClasses(); updateSelectedClassDisplay(); renderSubjects(); }
+        function selectClass(index) { disableBlockingMode(); selectedClassIndex = index; renderClasses(); updateSelectedClassDisplay(); renderSubjects(); }
         function handleCellClick(day, period) {
             const cellId = `d${day}-p${period}`; 
             if (isBlockingMode) { 
@@ -1389,11 +1794,14 @@
             setCursor(day, period);
         }
         function setCursor(day, period) {
+            disableBlockingMode();
             const oldId = `d${cursor.day}-p${cursor.period}`; const oldCell = document.getElementById(oldId); if (oldCell) oldCell.classList.remove('active-cell'); cursor = { day, period }; const newId = `d${day}-p${period}`; const newCell = document.getElementById(newId); if (newCell) { newCell.classList.add('active-cell'); newCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } updateCursorVisuals();
         }
         function updateCursorVisuals() { const newId = `d${cursor.day}-p${cursor.period}`; const newCell = document.getElementById(newId); if (newCell) { newCell.classList.add('active-cell'); newCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } }
         function insertSubject(subject) {
-            if (isBlockingMode) return; if (selectedClassIndex === -1 && classes.length > 0) { showToast("Bitte erst Klasse wählen!", true); return; } const currentClass = selectedClassIndex > -1 ? classes[selectedClassIndex] : { name: '', colorClass: 'bg-gray-200 text-gray-800' }; const cellId = `d${cursor.day}-p${cursor.period}`; let entries = timetableData[cellId] || []; if (entries.length >= 8) { showToast("Max. 8 Fächer erreicht!", true); return; } entries.push({ subject: subject, className: currentClass.name, colorClass: currentClass.colorClass, isMagicSelected: false, isManual: false }); timetableData[cellId] = entries; renderCellContent(document.getElementById(cellId), entries); advanceCursor();
+            if (isBlockingMode) { disableBlockingMode(); return; } 
+            
+            if (selectedClassIndex === -1 && classes.length > 0) { showToast("Bitte erst Klasse wählen!", true); return; } const currentClass = selectedClassIndex > -1 ? classes[selectedClassIndex] : { name: '', colorClass: 'bg-gray-200 text-gray-800' }; const cellId = `d${cursor.day}-p${cursor.period}`; let entries = timetableData[cellId] || []; if (entries.length >= 8) { showToast("Max. 8 Fächer erreicht!", true); return; } entries.push({ subject: subject, className: currentClass.name, colorClass: currentClass.colorClass, isMagicSelected: false, isManual: false }); timetableData[cellId] = entries; renderCellContent(document.getElementById(cellId), entries); advanceCursor();
         }
         function advanceCursor() { let nextPeriod = cursor.period + 1; let nextDay = cursor.day; if (nextPeriod > 8) { nextPeriod = 1; nextDay++; if (nextDay > 4) nextDay = 0; } setCursor(nextDay, nextPeriod); }
         function clearActiveCell() { const cellId = `d${cursor.day}-p${cursor.period}`; delete timetableData[cellId]; document.getElementById(cellId).innerHTML = ''; }
@@ -1414,6 +1822,7 @@
 
         // --- TEST DATA GENERATOR ---
         function fillTestSchedule() {
+            disableBlockingMode();
             if (classes.length === 0) { const demoClasses = ['6a', '6b', '6c', '6d', '6e']; demoClasses.forEach((name, idx) => { classes.push({ name: name, colorClass: classColors[idx % classColors.length] }); }); renderClasses(); selectClass(0); }
             timetableData = {}; blockedSlots = new Set(); lastResultData = null; magicRules = [];
             try {
@@ -1426,8 +1835,9 @@
                 const wpfIds = parallelPool.slice(0, 4); const foeaIds = parallelPool.slice(4, 6); const allParallelIds = [...wpfIds, ...foeaIds];
                 let entriesCount = 0;
                 classes.forEach(cls => {
-                    mitIds.forEach(id => addEntry(id, "MIT", cls)); ksIds.forEach(id => addEntry(id, "KS", cls)); solFixedIds.forEach(id => addEntry(id, "SOL", cls));
-                    wpfIds.forEach(id => addEntry(id, "WPF/SPA/TUE", cls)); foeaIds.forEach(id => addEntry(id, "FÖA", cls));
+                    // UPDATED: Used MEN instead of MIT
+                    mitIds.forEach(id => addEntry(id, "MEN", cls)); ksIds.forEach(id => addEntry(id, "KS", cls)); solFixedIds.forEach(id => addEntry(id, "SOL", cls));
+                    wpfIds.forEach(id => addEntry(id, "WPF", cls)); foeaIds.forEach(id => addEntry(id, "FÖA", cls));
                     let bucket = []; for(let i=0; i<4; i++) bucket.push("MAT"); for(let i=0; i<4; i++) bucket.push("DEU"); for(let i=0; i<4; i++) bucket.push("ENG"); for(let i=0; i<3; i++) bucket.push("NAT"); for(let i=0; i<2; i++) bucket.push("GGP"); for(let i=0; i<2; i++) bucket.push("SPO"); bucket.push("RAT"); bucket.push("CARE"); bucket.push("IPAD"); bucket.push("SOL");
                     const usedIds = [...allFixedIds, ...allParallelIds]; let mySlots = validSlots.filter(id => !usedIds.includes(id));
                     for (let i = mySlots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [mySlots[i], mySlots[j]] = [mySlots[j], mySlots[i]]; }
@@ -1446,9 +1856,8 @@
             renderClasses();
             document.getElementById('classInput').focus();
             updateLiveStats(); 
-            toggleBlockingMode();
-            toggleBlockingMode();
-
+            // FIXED: Removed double toggle to ensure correct init state
+            
             // CHECK TOUR STATUS
             if (!localStorage.getItem('stundenplan_tour_seen')) {
                 setTimeout(startTour, 800);
