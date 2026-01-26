@@ -233,7 +233,7 @@
         
         .tour-tooltip {
             position: absolute;
-            width: 320px; /* Slightly wider */
+            width: 340px; /* Slightly wider */
             background: white;
             border-radius: 12px;
             padding: 20px;
@@ -571,7 +571,7 @@
                     <input type="file" id="importFile" class="hidden" accept=".json" onchange="importFromFile(this)">
                     <button onclick="requestClearTimetable()" class="text-red-500 hover:bg-red-100 p-2 rounded transition" title="Alles löschen"><i class="fas fa-trash-alt"></i></button>
                     <button onclick="openPrintPreview()" class="text-gray-600 hover:bg-gray-200 p-2 rounded transition" title="Druckvorschau"><i class="fas fa-print"></i></button>
-                    <button onclick="startTour()" class="text-blue-500 hover:bg-blue-100 p-2 rounded transition" title="Tour starten"><i class="fas fa-info-circle"></i></button>
+                    <button onclick="document.getElementById('helpModal').classList.add('show')" class="text-blue-500 hover:bg-blue-100 p-2 rounded transition" title="Hilfe & Tutorial"><i class="fas fa-question-circle"></i></button>
                 </div>
             </div>
             
@@ -604,8 +604,8 @@
                 </div>
                 <div class="grid grid-cols-4 gap-2 mb-2">
                     <button id="blockToggleBtn" onclick="toggleBlockingMode()" class="bg-white border border-red-300 text-red-500 hover:bg-red-50 p-2 rounded text-xs flex justify-center" title="Sperren"><i class="fas fa-ban"></i></button>
-                    <button onclick="openRulesModal()" class="bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 p-2 rounded text-xs flex justify-center" title="Regeln"><i class="fas fa-list-ol"></i></button>
-                    <button onclick="openMagicSettings()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-2 rounded text-xs flex justify-center" title="Fächer"><i class="fas fa-cog"></i></button>
+                    <button id="btnRules" onclick="openRulesModal()" class="bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 p-2 rounded text-xs flex justify-center" title="Regeln"><i class="fas fa-list-ol"></i></button>
+                    <button id="btnMagicSettings" onclick="openMagicSettings()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-2 rounded text-xs flex justify-center" title="Fächer"><i class="fas fa-cog"></i></button>
                     <button onclick="reopenResult()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-2 rounded text-xs flex justify-center" title="Bericht"><i class="fas fa-chart-bar"></i></button>
                 </div>
                 <div class="flex gap-2" id="autoButtonSection">
@@ -635,7 +635,7 @@
                 </div>
             </div>
         </div>
-        <div class="p-3 bg-slate-50 border-t border-gray-200">
+        <div class="p-3 bg-slate-50 border-t border-gray-200" id="statsFooter">
             <div class="flex justify-between items-center mb-2">
                 <span class="text-xs font-bold text-slate-700 uppercase">Verteilung</span>
                 <span id="totalAssignedBadge" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">0/27</span>
@@ -785,7 +785,7 @@
             { 
                 targetId: null, 
                 title: "Willkommen beim Masterclass Planer!", 
-                text: "Lass mich dir kurz zeigen, wie du blitzschnell deinen Stundenplan erstellst. Das dauert keine Minute!" 
+                text: "Dieses Tool beherrscht zwei Dinge: 1. Das manuelle Erstellen von Stundenplänen. 2. Die 'Auto-Magie' für faire Verteilungen." 
             },
             { 
                 targetId: "personalDataSection", 
@@ -798,34 +798,54 @@
                 text: "Gib hier deine Klassen ein (z.B. 6a) und drücke Enter. Jede Klasse bekommt automatisch eine eigene Farbe." 
             },
             { 
-                targetId: "targetHoursSection", 
-                title: "3. Dein Ziel & Einstellungen", 
-                text: "Lege fest, wie viele Stunden du unterrichten musst. Über das Zahnrad kannst du bestimmen, in welchen Fächern du dabei sein willst." 
-            },
-            { 
                 targetId: "subjectSection", 
-                title: "4. Manuelles Planen", 
-                text: "1. Klicke links auf ein Fach. 2. Klicke dann in eine freie Zelle im Stundenplan, um es zu setzen. Tipp: Ein Klick auf ein Fach im Plan 'pinnt' es fest (Grüner Rahmen)." 
+                title: "3. Manuelles Ausfüllen", 
+                text: "Übertrage nun deinen Basis-Plan: 1. Fach links antippen. 2. Im Plan die Stunde klicken. Der Cursor springt automatisch weiter – so bist du blitzschnell fertig." 
             },
             { 
                 targetId: "mainTimetable", 
-                title: "5. Der Plan", 
-                text: "Hier siehst du deinen Stundenplan. Du kannst Stunden manuell setzen oder sperren (roter Button)." 
+                title: "4. Strategie-Wahl", 
+                text: "Jetzt entscheidest du: Entweder klickst du deine Fächer im Plan an, um sie manuell zu belegen (sie werden farbig). Oder... jetzt kommt die Magie: Du lässt Auto-Verteilen." 
+            },
+            { 
+                targetId: "targetHoursSection", 
+                title: "5. Vorbereitung Auto", 
+                text: "Bevor du 'Auto' drückst: 1. Lege dein Stunden-Ziel fest (gelbes Feld). 2. Nutze 'Sperren' (⛔), um Zeiten zu blockieren, an denen du nicht kannst." 
+            },
+             { 
+                targetId: "btnMagicSettings", 
+                title: "6. Fächer-Pool", 
+                text: "Hinter dem Zahnrad verbirgt sich die Fächerauswahl. Hier hakst du an, welche Fächer der Algorithmus überhaupt verteilen darf." 
+            },
+             { 
+                targetId: "btnRules", 
+                title: "7. Regeln", 
+                text: "Im Button daneben (Regeln) kannst du Zwänge definieren: Z.B. 'Ich muss in der 6e unbedingt 2x Mathe machen'." 
+            },
+             { 
+                targetId: "mainTimetable", 
+                title: "8. Pinnen", 
+                text: "Auch im Plan selbst kannst du steuern: Klicke ein Fach an, um es zu 'Pinnen' (Grüner Rahmen). Diese Stunde bleibt dann garantiert erhalten." 
             },
             { 
                 targetId: "autoButtonSection", 
-                title: "6. Die Magie ✨", 
-                text: "Der 'Auto'-Button füllt alle leeren Stunden automatisch auf – fair verteilt auf alle deine Klassen. Probier es aus!" 
+                title: "9. Auto-Start", 
+                text: "Klicke auf 'Auto'. Dein persönlicher Plan wird nun nach deinen Wünschen und Regeln optimal berechnet." 
+            },
+            { 
+                targetId: "statsFooter", 
+                title: "10. Verteilung", 
+                text: "Prüfe unter 'Verteilung', wie fair die Stunden gewichtet sind. Manuelle Änderungen aktualisieren diese Anzeige sofort." 
+            },
+            {
+                targetId: "demoDataBtn",
+                title: "11. Demo-Modus",
+                text: "Noch unsicher? Klicke auf 'Demo', um den Plan einmal komplett mit Testdaten zu füllen. So siehst du sofort, wie alles fertig aussieht."
             },
             { 
                 targetId: "toolbarActions", 
-                title: "7. Speichern & Drucken", 
-                text: "Vergiss nicht zu speichern (Diskette) oder deinen Plan direkt sauber auszudrucken (Drucker-Symbol)." 
-            },
-             { 
-                targetId: "demoDataBtn", 
-                title: "8. Ausprobieren?", 
-                text: "Klicke auf 'Demo', um den Plan einmal komplett mit Testdaten füllen zu lassen. So siehst du sofort, wie es am Ende aussieht!" 
+                title: "12. Toolbar & Hilfe", 
+                text: "Hier oben findest du Speichern, Drucken und die Hilfe (?). Im Hilfe-Menü kannst du diese Tour jederzeit neu starten und die ausführliche Anleitung lesen. Viel Erfolg!" 
             }
         ];
 
@@ -877,7 +897,7 @@
                 spotlight.style.opacity = '1';
 
                 // SMART POSITIONING LOGIC
-                const tooltipWidth = 320; // Approx width from CSS
+                const tooltipWidth = 340; // Approx width from CSS
                 const padding = 10;
 
                 // Default: Try Right
