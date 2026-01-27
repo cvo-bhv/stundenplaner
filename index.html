@@ -53,43 +53,45 @@
             overflow: hidden;
             border: 1px solid rgba(0,0,0,0.05); 
             width: 100%; 
-            height: 100%;
             transition: all 0.2s; 
             position: relative; 
             z-index: 10; 
             cursor: pointer;
-            padding: 4px; /* Added padding to prevent text touching borders */
+            padding: 2px; 
         }
-        .entry-chip:not(.dimmed):hover { transform: scale(1.05); box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 30; }
-        .entry-chip.dimmed { opacity: 0.3; filter: grayscale(100%); transform: scale(0.95); }
-        .entry-chip.dimmed:hover { opacity: 0.8; filter: grayscale(0%); transform: scale(1.02); z-index: 30; }
+        .entry-chip:not(.dimmed):hover { transform: scale(1.02); box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 30; }
+        .entry-chip.dimmed { opacity: 0.3; filter: grayscale(100%); transform: scale(0.98); }
+        .entry-chip.dimmed:hover { opacity: 0.8; filter: grayscale(0%); transform: scale(1.0); z-index: 30; }
 
         /* Chip Content Styling */
         .chip-subject {
-            font-size: 0.85rem; /* Base size */
-            line-height: 1.1;
-            word-break: break-word; /* Important for long words like WPF/SPA/TUE */
+            font-size: 0.85rem; 
+            line-height: 1;
+            word-break: break-word; 
             max-width: 100%;
             font-weight: 800;
         }
         .chip-class {
             font-size: 0.65rem;
             line-height: 1;
-            margin-top: 2px;
+            margin-top: 1px;
             opacity: 0.85;
-            white-space: normal; /* Allow wrap for long class lists */
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         /* Global Subject Chip Style - Standard */
         .global-chip {
-            background-color: #334155 !important; /* Slate 700 */
+            background-color: #334155 !important; 
             color: white !important;
             border: 2px solid #475569 !important;
-            grid-column: 1 / -1 !important; /* Span full width */
+            grid-column: 1 / -1 !important; 
             z-index: 40 !important;
         }
         .global-chip .chip-subject {
-            font-size: 0.9rem; /* Slightly larger for globals */
+            font-size: 0.9rem; 
         }
         .global-chip .chip-class { 
             color: #cbd5e1 !important; 
@@ -98,29 +100,42 @@
 
         /* SPECIAL STYLES FOR FÖA AND WPF (Subtle Greys) */
         .global-chip.special-foea {
-            background-color: #64748b !important; /* Slate 500 - Medium Grey */
+            background-color: #64748b !important; 
             border-color: #475569 !important;
             color: #f1f5f9 !important;
         }
         .global-chip.special-foea .chip-subject {
-            font-size: 0.75rem !important; /* Smaller Font */
+            font-size: 0.75rem !important; 
         }
 
         .global-chip.special-wpf {
-            background-color: #e2e8f0 !important; /* Slate 200 - Light Grey */
+            background-color: #e2e8f0 !important; 
             border-color: #cbd5e1 !important;
-            color: #334155 !important; /* Dark text for contrast */
+            color: #334155 !important; 
         }
         .global-chip.special-wpf .chip-subject {
-            font-size: 0.7rem !important; /* Smaller Font */
+            font-size: 0.7rem !important; 
         }
         .global-chip.special-wpf .chip-class {
-            color: #64748b !important; /* Darker class text */
+            color: #64748b !important; 
         }
         /* Icon color adjustment for light background */
         .global-chip.special-wpf .magic-icon {
             background: rgba(0,0,0,0.1); 
             color: #334155;
+        }
+        
+        /* ZUP Special Style */
+        .global-chip.special-zup {
+            background-color: #ffedd5 !important; /* Orange 100 */
+            border-color: #fdba74 !important; /* Orange 300 */
+            color: #9a3412 !important; /* Orange 900 */
+        }
+        .global-chip.special-zup .chip-class {
+            color: #c2410c !important; /* Orange 700 */
+        }
+        .global-chip.special-zup .magic-icon {
+            color: #ea580c !important;
         }
 
 
@@ -129,13 +144,40 @@
         .manual-selected { border: 2px solid #059669 !important; box-shadow: 0 0 8px rgba(5, 150, 105, 0.5); z-index: 26 !important; }
 
         .magic-icon {
-            position: absolute; top: 2px; right: 2px; background: rgba(255, 255, 255, 0.95);
-            border-radius: 50%; width: 14px; height: 14px; font-size: 9px;
+            position: absolute; bottom: 2px; right: 2px; background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%; width: 12px; height: 12px; font-size: 8px;
             display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            z-index: 20; /* Ensure icon is above text */
+            z-index: 20;
         }
         .magic-icon.auto { color: #b45309; }
-        .magic-icon.manual { color: #059669; }
+        
+        /* NEW CHIP BUTTONS */
+        .chip-btn {
+            position: absolute;
+            width: 16px; 
+            height: 16px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            border-radius: 50%; 
+            font-size: 9px;
+            cursor: pointer;
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.2s, background 0.2s, transform 0.1s;
+            z-index: 50;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        /* Hover target area to show buttons */
+        .entry-chip:hover .chip-btn { opacity: 1; }
+        
+        .chip-btn.delete { top: 1px; left: 1px; color: #ef4444; }
+        .chip-btn.delete:hover { background: #ef4444; color: white; transform: scale(1.1); }
+        
+        .chip-btn.pin { top: 1px; right: 1px; color: #cbd5e1; } /* Default gray pin */
+        .chip-btn.pin:hover { color: #10b981; transform: scale(1.1); }
+        .chip-btn.pin.active { opacity: 1; color: #10b981; font-weight: bold; background: #ecfdf5; } /* Active green pin */
+
 
         /* UI Elements */
         .toast {
@@ -152,10 +194,12 @@
             opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        
         .modal-box {
             background: white; padding: 24px; border-radius: 12px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 500px; width: 90%;
-            max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.2s;
+            max-height: 90vh; 
+            transform: scale(0.95); transition: transform 0.2s;
         }
         .modal-overlay.show .modal-box { transform: scale(1); }
 
@@ -180,13 +224,13 @@
             width: 1200px;
             padding: 20px;
             background: white;
+            overflow-y: auto; 
         }
 
         #printPreviewContent {
             border: 1px solid #ddd;
             padding: 1cm;
             background: white;
-            /* Remove aspect ratio constraint to let margins and cm dimensions rule */
             overflow: visible; 
             display: block;
         }
@@ -198,20 +242,6 @@
         .help-content ol { list-style-type: decimal; }
         .help-content li { margin-bottom: 0.3em; color: #475569; font-size: 0.95em; }
         .help-content strong { color: #0f172a; }
-
-        /* Animation for Metadata Toggle */
-        .metadata-content {
-            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s;
-            max-height: 200px;
-            opacity: 1;
-            overflow: hidden;
-        }
-        .metadata-content.collapsed {
-            max-height: 0;
-            opacity: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
 
         /* BLOCKING MODE VISUALS */
         .blocking-banner {
@@ -228,10 +258,7 @@
             animation: pulse-red 2s infinite;
         }
         
-        /* When active, banner shows and table gets border */
-        body.blocking-active .blocking-banner {
-            display: block;
-        }
+        body.blocking-active .blocking-banner { display: block; }
         body.blocking-active #mainTimetable {
             border: 4px solid #ef4444 !important;
             box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
@@ -252,7 +279,6 @@
         }
         .tour-overlay.active { display: block; }
         
-        /* The spotlight effect using huge box-shadow */
         .tour-spotlight {
             position: absolute;
             border-radius: 8px;
@@ -264,24 +290,23 @@
         
         .tour-tooltip {
             position: absolute;
-            width: 340px; /* Slightly wider */
+            width: 340px; 
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3); /* Deeper shadow for visibility */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
             z-index: 9002;
             opacity: 0;
             transition: opacity 0.3s ease, top 0.3s ease, left 0.3s ease;
             pointer-events: auto;
         }
         .tour-tooltip.visible { opacity: 1; }
-        /* Arrow removed to prevent rendering glitches */
 
         /* PRINT STYLES */
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 1cm; /* Standard margins */
+                margin: 1cm; 
             }
             body > *:not(#printPreviewModal) { display: none !important; }
             
@@ -342,6 +367,13 @@
                 border: 1px dotted #94a3b8 !important;
             }
             .global-chip.special-wpf span { color: black !important; }
+            
+            .global-chip.special-zup {
+                background-color: #ffedd5 !important;
+                border: 1px solid #fdba74 !important;
+                color: black !important;
+            }
+            .global-chip.special-zup span { color: black !important; }
 
 
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -459,7 +491,7 @@
 
     <!-- Modals -->
     <div id="confirmModal" class="modal-overlay">
-        <div class="modal-box">
+        <div class="modal-box" style="overflow-y: auto;">
             <h3 class="text-lg font-bold text-gray-900 mb-2">Bestätigung</h3>
             <p id="confirmText" class="text-gray-600 mb-6">Sind Sie sicher?</p>
             <div class="flex justify-end gap-3">
@@ -473,7 +505,6 @@
     <div id="tourOverlay" class="tour-overlay">
         <div id="tourSpotlight" class="tour-spotlight"></div>
         <div id="tourTooltip" class="tour-tooltip">
-            <!-- Arrow removed to prevent glitches -->
             <div class="flex justify-between items-start mb-2">
                 <h3 id="tourTitle" class="font-bold text-lg text-gray-800">Willkommen!</h3>
                 <button onclick="endTour()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
@@ -504,65 +535,50 @@
     </div>
 
     <div id="resultModal" class="modal-overlay">
-        <div class="modal-box max-w-lg">
+        <div class="modal-box max-w-lg" style="overflow-y: auto;">
             <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center"><i class="fas fa-chart-pie mr-2 text-amber-500"></i> Verteilungsergebnis</h3>
             <div id="resultContent" class="text-gray-600 mb-6 text-sm max-h-[60vh] overflow-y-auto pr-2"></div>
             <div class="flex justify-end"><button onclick="closeResult()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold shadow-md">OK, Danke</button></div>
         </div>
     </div>
 
-    <!-- NEW MAGIC SETTINGS MODAL (Advanced) -->
+    <!-- NEW MAGIC SETTINGS MODAL -->
     <div id="magicSettingsModal" class="modal-overlay">
-        <div class="modal-box max-w-lg">
-            <h3 class="text-lg font-bold text-gray-900 mb-2 flex items-center"><i class="fas fa-cogs mr-2 text-gray-500"></i> Fächer verwalten</h3>
-            <p class="text-sm text-gray-500 mb-4 leading-relaxed">
-                <strong>Wofür ist das?</strong> Hier definierst du deinen persönlichen Fächer-Pool.<br>
-                👁️ <strong>Auge:</strong> Zeigt das Fach in der linken Seitenleiste an.<br>
-                ✨ <strong>Haken:</strong> Dieses Fach wird beim Klick auf "Auto" automatisch verteilt.
-            </p>
-            
-            <!-- ADD NEW SUBJECT / SEARCH -->
-            <div class="flex gap-2 mb-2 bg-gray-50 p-2 rounded border border-gray-200">
-                <input type="text" id="newSubjectInput" placeholder="Suchen oder neu..." class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500" onkeypress="handleNewSubjectEnter(event)" oninput="filterMagicSettings(this.value)">
-                <button onclick="addNewSubject()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold"><i class="fas fa-plus"></i></button>
-            </div>
-            
-            <!-- ADD NEW: QUICK ACTIONS -->
-            <div class="flex gap-2 mb-4">
-                <button onclick="deselectAllMagic()" class="flex-1 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 py-1.5 rounded text-xs font-bold shadow-sm transition">
-                    <i class="fas fa-square mr-1"></i> Auto-Auswahl aufheben
-                </button>
-                <button onclick="showAllSubjects()" class="flex-1 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 py-1.5 rounded text-xs font-bold shadow-sm transition">
-                    <i class="fas fa-eye mr-1"></i> Alle einblenden
-                </button>
-            </div>
-
-            <!-- Header for List -->
-            <div class="flex justify-between items-center px-2 mb-2 text-xs font-bold text-gray-500 border-b border-gray-100 pb-1">
-                <span class="uppercase">Fachname</span>
-                <div class="flex items-center gap-4 mr-8">
-                    <span title="Sichtbar" class="w-6 text-center text-base"><i class="fas fa-eye"></i></span>
-                    <span title="Auto-Verteilung" class="w-4 text-center text-base"><i class="fas fa-check-square"></i></span>
+        <div class="modal-box max-w-lg flex flex-col max-h-[85vh]">
+            <div class="flex-shrink-0">
+                <h3 class="text-lg font-bold text-gray-900 mb-2 flex items-center"><i class="fas fa-cogs mr-2 text-gray-500"></i> Fächer verwalten</h3>
+                <p class="text-sm text-gray-500 mb-4 leading-relaxed">
+                    <strong>Wofür ist das?</strong> Hier definierst du deinen persönlichen Fächer-Pool.<br>
+                    👁️ <strong>Auge:</strong> Zeigt das Fach in der linken Seitenleiste an.<br>
+                    ✨ <strong>Haken:</strong> Dieses Fach wird beim Klick auf "Auto" automatisch verteilt.
+                </p>
+                <div class="flex gap-2 mb-2 bg-gray-50 p-2 rounded border border-gray-200">
+                    <input type="text" id="newSubjectInput" placeholder="Suchen oder neu..." class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500" onkeypress="handleNewSubjectEnter(event)" oninput="filterMagicSettings(this.value)">
+                    <button onclick="addNewSubject()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="flex gap-2 mb-4">
+                    <button onclick="deselectAllMagic()" class="flex-1 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 py-1.5 rounded text-xs font-bold shadow-sm transition"><i class="fas fa-square mr-1"></i> Auto-Auswahl aufheben</button>
+                    <button onclick="showAllSubjects()" class="flex-1 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 py-1.5 rounded text-xs font-bold shadow-sm transition"><i class="fas fa-eye mr-1"></i> Alle einblenden</button>
+                </div>
+                <div class="flex justify-between items-center px-2 mb-2 text-xs font-bold text-gray-500 border-b border-gray-100 pb-1">
+                    <span class="uppercase">Fachname</span>
+                    <div class="flex items-center gap-4 mr-8">
+                        <span title="Sichtbar" class="w-6 text-center text-base"><i class="fas fa-eye"></i></span>
+                        <span title="Auto-Verteilung" class="w-4 text-center text-base"><i class="fas fa-check-square"></i></span>
+                    </div>
                 </div>
             </div>
-
-            <!-- LIST -->
-            <div id="magicSettingsList" class="space-y-1 mb-6 max-h-[50vh] overflow-y-auto pr-2"></div>
-            
-            <div class="flex justify-end gap-3">
-                <button onclick="closeMagicSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold">Fertig</button>
+            <div id="magicSettingsList" class="space-y-1 mb-4 overflow-y-auto flex-1 min-h-0 pr-2 border-t border-b border-gray-50 py-2"></div>
+            <div class="flex-shrink-0 flex justify-end gap-3 mt-auto">
+                <button onclick="closeMagicSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold w-full sm:w-auto">Fertig</button>
             </div>
         </div>
     </div>
 
     <div id="rulesModal" class="modal-overlay">
-        <div class="modal-box max-w-xl">
+        <div class="modal-box max-w-xl" style="overflow-y: auto;">
             <h3 class="text-lg font-bold text-gray-900 mb-2 flex items-center"><i class="fas fa-list-ol mr-2 text-blue-500"></i> Regeln</h3>
-            <p class="text-sm text-gray-500 mb-4 leading-relaxed">
-                Hier kannst du der Automatik feste Vorgaben geben. <br>
-                <em>Beispiel:</em> "Die Klasse 6a braucht zwingend 4 Stunden Mathe."<br>
-                Sinnvoll, wenn die Automatik ein Fach zu oft oder zu selten verplant.
-            </p>
+            <p class="text-sm text-gray-500 mb-4 leading-relaxed">Hier kannst du der Automatik feste Vorgaben geben. <br><em>Beispiel:</em> "Die Klasse 6a braucht zwingend 4 Stunden Mathe."</p>
             <div class="flex gap-2 mb-4 items-end bg-gray-50 p-2 rounded border border-gray-200">
                 <div class="flex-1"><label class="block text-[10px] uppercase text-gray-500 font-bold mb-1">Klasse</label><select id="ruleClassSelect" class="w-full text-sm border-gray-300 rounded p-1"></select></div>
                 <div class="flex-1"><label class="block text-[10px] uppercase text-gray-500 font-bold mb-1">Fach</label><select id="ruleSubjectSelect" class="w-full text-sm border-gray-300 rounded p-1"></select></div>
@@ -576,61 +592,54 @@
 
     <!-- Help Modal -->
     <div id="helpModal" class="modal-overlay">
-        <div class="modal-box max-w-2xl">
-            <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center border-b pb-2">
-                <i class="fas fa-book-reader mr-2 text-blue-500"></i> Anleitung
-            </h3>
-            <div class="help-content overflow-y-auto max-h-[60vh] pr-2 text-sm">
-                <h3>1. Der Schnellstart 🚀</h3>
-                <ol>
-                    <li><strong>Persönliche Daten:</strong> Trage oben deinen Namen, Jahrgang und Schuljahr ein.</li>
-                    <li><strong>Klassen anlegen:</strong> Erstelle <strong>alle</strong> deine Klassen nacheinander (z.B. <code>6a</code> eingeben, Enter drücken, dann <code>6b</code>...).</li>
-                    <li><strong>Stundenplan füllen:</strong> Wähle eine Klasse aus (Klick auf den Namen). Klicke dann links auf ein Fach. Der Planer füllt Montag 1. Std und springt automatisch weiter.</li>
-                    <li><strong>Nächste Klasse:</strong> Wenn du fertig bist, wähle die nächste Klasse und wiederhole den Vorgang.</li>
-                    <li><strong>Fächer wählen:</strong> Klicke auf das Zahnrad (<code>Fächer</code>), um auszuwählen, in welchen Fächern du dabei sein möchtest. <em>Hinweis:</em> Die Hauptfächer sind vorselektiert, können aber abgewählt werden.</li>
-                </ol>
+        <div class="modal-box max-w-2xl" style="overflow-y: auto;">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center border-b pb-2"><i class="fas fa-book-reader mr-2 text-blue-500"></i> Anleitung</h3>
+            <div class="help-content overflow-y-auto max-h-[60vh] pr-2 text-sm space-y-4">
+                <section>
+                    <h3>1. Der Start: Wer bist du? 📝</h3>
+                    <p>Ganz oben findest du die Leiste für deine <strong>Persönlichen Daten</strong>. Trage dort deinen Namen, Kürzel, Jahrgang und das Schuljahr ein. Diese Infos erscheinen später schön formatiert auf deinem Ausdruck.</p>
+                </section>
 
-                <h3>2. Manuelle Planung & "Anpinnen" 📌</h3>
-                <p>Du hast das letzte Wort!</p>
-                <ul>
-                    <li><strong>Fächer setzen:</strong> Klicke in eine Zelle und wähle links ein Fach aus.</li>
-                    <li><strong>Fixieren (Der Pin):</strong> Klicke auf ein Fach im Plan. Es bekommt einen <strong>grünen Rahmen</strong>.
-                        <ul>
-                            <li><strong>Bedeutung:</strong> Diese Stunde ist jetzt "heilig". Der Algorithmus verschiebt sie nicht.</li>
-                            <li><strong>Tipp:</strong> Nutze das für feste Termine wie die UP-Leitungssitzung am Mittwoch in der 5. Stunde ;-).</li>
-                        </ul>
-                    </li>
-                    <li><strong>Lösen:</strong> Klicke erneut darauf, um die Fixierung aufzuheben.</li>
-                </ul>
+                <section>
+                    <h3>2. Klassen anlegen 🏫</h3>
+                    <p>Rechts daneben erstellst du deine Klassen. Tippe einfach den Namen (z.B. <code>6a</code>) ein und drücke <strong>Enter</strong> oder auf das <strong>+</strong>. Die Klassen erscheinen dann als kleine Buttons in der Leiste.</p>
+                </section>
 
-                <h3>3. Fächer verwalten & Ausblenden 👁️</h3>
-                <p>Damit du den Überblick behältst (weniger ist mehr!):</p>
-                <ul>
-                    <li><strong>Ausblenden (Rechtsklick):</strong> Mache einen Rechtsklick auf ein Fach in der linken Leiste, um es sofort auszublenden.</li>
-                    <li><strong>Verwalten (Zahnrad):</strong> Im Fächer-Menü kannst du ausgeblendete Fächer wieder sichtbar machen (Augen-Symbol).</li>
-                    <li><strong>Warum?</strong> Wenn du z.B. nur im Jahrgang 6 unterrichtest, brauchst du keine Chemie-Oberstufe in der Liste.</li>
-                </ul>
+                <section>
+                    <h3>3. Der Stundenplan: Manuelle Eingabe ✍🏻</h3>
+                    <p>Wähle zuerst oben eine Klasse aus (sie wird farbig markiert). Klicke dann links in der Leiste auf ein <strong>Fach</strong>. Der Planer füllt automatisch das nächste freie Feld. <br>
+                    <em>Tipp:</em> Du kannst auch direkt in ein Feld im Stundenplan klicken (es wird blau umrandet) und dann ein Fach auswählen, um genau dort etwas einzutragen.</p>
+                </section>
 
-                <h3>4. Sperrzeiten (⛔)</h3>
-                <ol>
-                    <li>Klicke auf den Button <strong>Sperren</strong>.</li>
-                    <li>Klicke auf die Stunden im Plan, die du blockieren möchtest.</li>
-                    <li>Klicke erneut auf den Sperren-Button, um den Modus zu beenden.</li>
-                </ol>
+                <section>
+                    <h3>4. Korrigieren & Fixieren 📌</h3>
+                    <p>Hier hast du die volle Kontrolle:</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li><strong>Löschen (X):</strong> Fahre mit der Maus über ein Fach im Plan. Oben links erscheint ein rotes <strong>X</strong>. Ein Klick, und das Fach ist weg.</li>
+                        <li><strong>Pinnen (Fixieren):</strong> Oben rechts im Fach siehst du eine Nadel. Klicke sie an, damit sie <strong>grün</strong> wird. Das bedeutet: "Dieses Fach ist heilig!". Die Automatik wird es <strong>nicht</strong> verschieben. Perfekt für feste Termine.</li>
+                        <li><strong>Ändern:</strong> Klicke ein Feld an (blauer Rahmen) und wähle ein anderes Fach, um es auszutauschen.</li>
+                    </ul>
+                </section>
 
-                <h3>5. Auto-Verteilung ✨</h3>
-                <p>Klicke auf den <strong>"Auto"-Button</strong>. Der Algorithmus füllt deinen Plan auf und achtet streng auf eine faire Verteilung zwischen den Klassen.</p>
+                <section>
+                    <h3>5. Die Automatik & Konfiguration ⚙️</h3>
+                    <p>Bevor du die Magie startest:</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li><strong>Sperren (⛔):</strong> Klicke auf den "Sperren"-Button und markiere Zeiten im Plan, an denen du gar nicht kannst.</li>
+                        <li><strong>Fächer-Pool (Zahnrad):</strong> Wähle hier aus, welche Fächer überhaupt verteilt werden sollen.</li>
+                        <li><strong>Regeln:</strong> Definiere Zwänge wie "Klasse 6a muss 2x Mathe haben".</li>
+                    </ul>
+                    <p class="mt-2">Alles bereit? Klicke auf <strong>Auto</strong>. Der Algorithmus berechnet nun fair die Verteilung. Das Ergebnis siehst du sofort in der Statistik.</p>
+                </section>
 
-                <h3>6. Speichern & Drucken 🖨️</h3>
-                <ul>
-                    <li><strong>Speichern (💾):</strong> Sichert deinen Plan als Datei auf dem Gerät.</li>
-                    <li><strong>Laden (📂):</strong> Lädt eine gespeicherte Datei.</li>
-                    <li><strong>Drucken:</strong> Öffnet eine saubere A4-Druckvorschau.</li>
-                </ul>
-            </div>
-            <div class="mt-4 pt-3 border-t border-gray-200 text-xs text-center text-gray-500">
-                <p class="font-semibold mb-1">App von <strong>victorymouth Apps</strong></p>
-                <p>Fragen? Schreib mir: <a href="mailto:s.murer@schulen.bremerhaven.de" class="text-blue-600 hover:underline">s.murer@schulen.bremerhaven.de</a></p>
+                <section>
+                    <h3>6. Abschluss & Export 🖨️</h3>
+                    <p>Nach der Automatik kannst du natürlich noch manuell eingreifen und Fächer verschieben. Wenn alles passt:</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li><strong>Drucken:</strong> Erzeugt eine saubere PDF-Ansicht.</li>
+                        <li><strong>Speichern (Diskette):</strong> Speichert den aktuellen Stand als Datei auf deinem PC, damit du später weitermachen kannst.</li>
+                    </ul>
+                </section>
             </div>
             <div class="flex justify-end mt-2">
                 <button onclick="startTour()" class="px-4 py-2 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded font-bold mr-2">Tour starten</button>
@@ -641,62 +650,39 @@
 
     <!-- SIDEBAR -->
     <aside class="w-80 bg-white shadow-xl z-30 flex flex-col h-full border-r border-gray-200 flex-shrink-0 no-print">
-        <div class="p-4 border-b border-gray-100 bg-gray-50">
-            <!-- UPDATED LAYOUT FOR HEADER -->
-            <div class="flex flex-col mb-3">
-                <h1 class="text-lg font-bold text-gray-800 flex items-center mb-2"><i class="fas fa-layer-group text-blue-600 mr-2"></i> SopädStundenplaner</h1>
+        <div class="p-3 border-b border-gray-100 bg-gray-50">
+            <div class="flex flex-col mb-2">
+                <h1 class="text-lg font-bold text-gray-800 flex items-center mb-1"><i class="fas fa-layer-group text-blue-600 mr-2"></i> SopädStundenplaner</h1>
                 <div class="flex gap-1 justify-end w-full" id="toolbarActions">
-                    <button onclick="exportToFile()" class="text-emerald-600 hover:bg-emerald-100 p-2 rounded transition" title="Datei speichern"><i class="fas fa-save"></i></button>
-                    <button onclick="document.getElementById('importFile').click()" class="text-blue-600 hover:bg-blue-100 p-2 rounded transition" title="Datei laden"><i class="fas fa-folder-open"></i></button>
+                    <button onclick="exportToFile()" class="text-emerald-600 hover:bg-emerald-100 p-1.5 rounded transition" title="Speichern"><i class="fas fa-save"></i></button>
+                    <button onclick="document.getElementById('importFile').click()" class="text-blue-600 hover:bg-blue-100 p-1.5 rounded transition" title="Laden"><i class="fas fa-folder-open"></i></button>
                     <input type="file" id="importFile" class="hidden" accept=".json" onchange="importFromFile(this)">
-                    <button onclick="requestClearTimetable()" class="text-red-500 hover:bg-red-100 p-2 rounded transition" title="Alles löschen"><i class="fas fa-trash-alt"></i></button>
-                    <button onclick="openPrintPreview()" class="text-gray-600 hover:bg-gray-200 p-2 rounded transition" title="Druckvorschau"><i class="fas fa-print"></i></button>
-                    <button onclick="document.getElementById('helpModal').classList.add('show')" class="text-blue-500 hover:bg-blue-100 p-2 rounded transition" title="Hilfe & Tutorial"><i class="fas fa-question-circle"></i></button>
+                    <button onclick="requestClearTimetable()" class="text-red-500 hover:bg-red-100 p-1.5 rounded transition" title="Löschen"><i class="fas fa-trash-alt"></i></button>
+                    <button onclick="openPrintPreview()" class="text-gray-600 hover:bg-gray-200 p-1.5 rounded transition" title="Drucken"><i class="fas fa-print"></i></button>
+                    <button onclick="document.getElementById('helpModal').classList.add('show')" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded transition" title="Hilfe"><i class="fas fa-question-circle"></i></button>
                 </div>
             </div>
-            
-            <!-- NEW COLLAPSIBLE METADATA INPUTS -->
-            <div class="mb-3 border border-gray-200 rounded-lg bg-white overflow-hidden" id="personalDataSection">
-                <button onclick="toggleMetaData()" class="w-full flex justify-between items-center p-2 bg-gray-50 text-xs font-bold text-gray-700 hover:bg-gray-100 focus:outline-none">
-                    <span class="flex items-center"><i class="fas fa-user-edit mr-2 text-blue-500"></i>Persönliche Daten</span>
-                    <i id="metaDataChevron" class="fas fa-chevron-down transition-transform text-gray-400"></i>
-                </button>
-                <div id="metaDataContent" class="metadata-content p-2 space-y-2 border-t border-gray-100">
-                    <input type="text" id="teacherNameInput" placeholder="Name / Kürzel" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
-                    <div class="flex gap-2">
-                        <input type="text" id="gradeLevelInput" placeholder="Jahrgang (z.B. 6)" class="flex-1 w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
-                        <input type="text" id="schoolYearInput" placeholder="Schuljahr (25/26)" class="flex-1 w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500">
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex gap-2" id="classInputSection">
-                <input type="text" id="classInput" placeholder="Klasse..." class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500" onkeypress="handleClassEnter(event)">
-                <button onclick="addClass()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus"></i></button>
-            </div>
-            <div id="classList" class="flex flex-wrap gap-1.5 mt-3 max-h-24 overflow-y-auto"><span class="text-gray-400 text-xs italic">Keine Klassen...</span></div>
         </div>
-        <div class="flex-1 overflow-y-auto p-4 space-y-6">
-            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3" id="targetHoursSection">
-                <div class="flex justify-between items-center mb-2">
+        
+        <div class="flex-1 overflow-y-auto p-3 space-y-4" id="sidebarScrollArea">
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-2" id="targetHoursSection">
+                <div class="flex justify-between items-center mb-1">
                     <span class="text-xs font-bold text-amber-800 uppercase">Unterrichtsstunden</span>
                     <input type="number" id="teacherHours" value="27" min="1" max="40" onchange="updateLiveStats()" class="w-12 text-sm text-center border border-amber-300 rounded bg-white">
                 </div>
-                
-                <!-- Helper Text for Menus -->
-                <div class="text-[10px] text-amber-800 mb-1 opacity-80 text-center font-medium">Konfiguration: Sperren, Regeln, Fächer & Bericht</div>
-                
+                <div class="text-[9px] text-amber-800 mb-1 opacity-80 text-center font-medium">Konfiguration: Sperren, Regeln, Fächer & Bericht</div>
                 <div class="grid grid-cols-4 gap-2 mb-2">
-                    <button id="blockToggleBtn" onclick="toggleBlockingMode()" class="bg-white border border-red-300 text-red-500 hover:bg-red-50 p-2 rounded text-xs flex justify-center" title="Sperren"><i class="fas fa-ban"></i></button>
-                    <button id="btnRules" onclick="openRulesModal()" class="bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 p-2 rounded text-xs flex justify-center" title="Regeln"><i class="fas fa-list-ol"></i></button>
-                    <button id="btnMagicSettings" onclick="openMagicSettings()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-2 rounded text-xs flex justify-center" title="Fächer"><i class="fas fa-cog"></i></button>
-                    <button onclick="reopenResult()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-2 rounded text-xs flex justify-center" title="Bericht"><i class="fas fa-chart-bar"></i></button>
+                    <button id="blockToggleBtn" onclick="toggleBlockingMode()" class="bg-white border border-red-300 text-red-500 hover:bg-red-50 p-1.5 rounded text-xs flex justify-center" title="Sperren"><i class="fas fa-ban"></i></button>
+                    <button id="btnRules" onclick="openRulesModal()" class="bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 p-1.5 rounded text-xs flex justify-center" title="Regeln"><i class="fas fa-list-ol"></i></button>
+                    <button id="btnMagicSettings" onclick="openMagicSettings()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-1.5 rounded text-xs flex justify-center" title="Fächer"><i class="fas fa-cog"></i></button>
+                    <button onclick="reopenResult()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-1.5 rounded text-xs flex justify-center" title="Bericht"><i class="fas fa-chart-bar"></i></button>
                 </div>
                 <div class="flex gap-2" id="autoButtonSection">
                     <button onclick="runMagicAlgorithm()" class="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white py-1.5 rounded text-xs font-bold shadow-sm transition"><i class="fas fa-magic mr-1"></i> Auto</button>
                     <button onclick="clearMagicSelection()" class="px-2 text-xs text-amber-700 underline hover:text-amber-900">Reset</button>
                 </div>
             </div>
+            
             <div id="subjectSection">
                 <div class="flex justify-between items-end mb-2">
                     <span class="text-xs font-bold text-gray-500 uppercase">Fächer</span>
@@ -719,38 +705,54 @@
                 </div>
             </div>
         </div>
-        
-        <!-- NEW EXPANDABLE STATS FOOTER -->
-        <div class="p-3 bg-slate-50 border-t border-gray-200 flex flex-col flex-shrink-0" id="statsFooter">
-            <div class="flex justify-between items-center mb-2 cursor-pointer" onclick="toggleStatsPanel()">
-                <div class="flex items-center">
-                    <span class="text-xs font-bold text-slate-700 uppercase mr-2">Verteilung</span>
-                    <span id="totalAssignedBadge" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">0/27</span>
-                </div>
-                <button class="text-gray-400 hover:text-gray-700 transition-transform duration-300" id="statsToggleBtn">
-                    <i class="fas fa-chevron-up"></i>
-                </button>
+        <div class="p-3 bg-slate-50 border-t border-gray-200" id="statsFooter" data-position="bottom">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
+                    Verteilung 
+                    <button onclick="toggleStatsPosition()" class="text-gray-400 hover:text-blue-600 transition-transform duration-200" title="Verschieben"><i id="statsPositionArrow" class="fas fa-chevron-up"></i></button>
+                </span>
+                <span id="totalAssignedBadge" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">0/27</span>
             </div>
-            <div id="liveStatsContent" class="text-xs text-gray-600 max-h-32 overflow-y-auto pr-1 transition-all duration-300 ease-in-out">
-                <p class="text-gray-400 italic text-center py-2">Leer</p>
-            </div>
+            <div id="liveStatsContent" class="text-xs text-gray-600 max-h-32 overflow-y-auto pr-1"><p class="text-gray-400 italic text-center py-2">Leer</p></div>
         </div>
     </aside>
 
     <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-gray-100 p-4 print:p-0">
-        <!-- Banner for Blocking Mode -->
+        <div id="topBar" class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 mb-3 flex flex-col gap-3 print:hidden">
+            <div class="flex gap-4 items-start">
+                <div class="flex-1 border-r border-gray-100 pr-4" id="personalDataSection">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Persönliche Daten</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="teacherNameInput" placeholder="Name" class="flex-[2] border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500">
+                        <input type="text" id="gradeLevelInput" placeholder="Jahrg." class="flex-1 w-16 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500">
+                        <input type="text" id="schoolYearInput" placeholder="Schuljahr" class="flex-1 w-20 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="flex-1" id="classInputSection">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Neue Klasse</label>
+                    <div class="flex gap-1">
+                        <input type="text" id="classInput" placeholder="z.B. 6a..." class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500" onkeypress="handleClassEnter(event)">
+                        <button onclick="addClass()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-sm"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div id="classList" class="flex flex-wrap gap-2 min-h-[32px] items-center pt-1 border-t border-gray-50">
+                <span class="text-gray-400 text-xs italic">Keine Klassen...</span>
+            </div>
+        </div>
+
         <div id="blockingBanner" class="blocking-banner">
             <i class="fas fa-hand-paper mr-2"></i>SPERR-MODUS AKTIV - Markiere die Flächen, in denen du nicht arbeiten kannst
         </div>
 
         <div id="mainTimetable" class="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-300 flex-1 flex flex-col print:border-none print:shadow-none">
-            <div class="grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] bg-slate-800 text-white text-center font-bold text-sm shadow-md z-10 flex-shrink-0">
-                <div class="p-2 border-r border-slate-600">Zeit</div>
-                <div class="p-2 border-r border-slate-600">Mo</div>
-                <div class="p-2 border-r border-slate-600">Di</div>
-                <div class="p-2 border-r border-slate-600">Mi</div>
-                <div class="p-2 border-r border-slate-600">Do</div>
+            <div id="timetableHeader" class="grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] bg-slate-800 text-white text-center font-bold text-sm shadow-md z-10 flex-shrink-0 transition-colors duration-300">
+                <div class="p-2 border-r border-slate-600/30">Zeit</div>
+                <div class="p-2 border-r border-slate-600/30">Mo</div>
+                <div class="p-2 border-r border-slate-600/30">Di</div>
+                <div class="p-2 border-r border-slate-600/30">Mi</div>
+                <div class="p-2 border-r border-slate-600/30">Do</div>
                 <div class="p-2">Fr</div>
             </div>
             <div id="timetableBody" class="text-sm overflow-y-auto flex-1 bg-white"></div>
@@ -769,15 +771,13 @@
         }
 
         // --- 1. CONFIGURATION ---
-        // NEW: allSubjects from user provided list
         let allSubjects = [
             "BIO", "BSO", "CARE", "CHE-E", "CHE-G", "DEU", "DEU-E", "DEU-G", 
             "ENG", "ENG-E", "ENG-G", "FÖA", "GGP", "GSE", "IPAD", "KS", "KUN", 
             "MAT", "MAT-E", "MAT-G", "MEN", "MUS", "NAT", "PHY-E", "PHY-G", 
-            "RAT", "REL", "SOL", "SOZ", "SPA", "SPO", "TUE", "WAT", "WPF", "---"
+            "RAT", "REL", "SOL", "SOZ", "SPA", "SPO", "TUE", "WAT", "WPF", "ZUP", "---"
         ];
         
-        // Custom Color Map
         const subjectColors = {
             "BIO": "#6BE5C3", "BSO": "#D97C34", "CARE": "#C4A661", "CHE-E": "#9B30FF",
             "CHE-G": "#702090", "DEU": "#D97C34", "DEU-E": "#3B5CD7", "DEU-G": "#8B5742",
@@ -787,30 +787,24 @@
             "MEN": "#F53DF5", "MUS": "#D1458F", "NAT": "#7B92B6", "PHY-E": "#D040B0",
             "PHY-G": "#4B70C0", "RAT": "#3B5CD7", "REL": "#D97C34", "SOL": "#D97C34",
             "SOZ": "#D97C34", "SPA": "#D97C34", "SPO": "#682568", "TUE": "#BD805C",
-            "WAT": "#BA3628", "WPF": "#5D6D7E"
+            "WAT": "#BA3628", "WPF": "#5D6D7E", "ZUP": "#C46F3A"
         };
         
-        const EXCLUDED_LOWER_GRADE_SUBJECTS = ["MAT-G", "MAT-E", "ENG-G", "ENG-E", "BIO", "CHE-G", "CHE-E", "PHY-G", "PHY-E", "SOZ", "REL"];
-        const MAIN_SUBJECT_KEYS = ["MAT", "DEU", "ENG"];
-        // Updated GLOBAL_SUBJECTS to include individual codes instead of combo
-        const GLOBAL_SUBJECTS = ["FÖA", "WPF", "SPA", "TUE", "MEN"];
+        const GLOBAL_SUBJECTS = ["FÖA", "WPF", "SPA", "TUE", "MEN", "ZUP"];
         
-        // 6 DISTINCT COLORS (a-f)
         const classColors = [
-            'bg-red-200 text-red-900 border-red-300',      
-            'bg-blue-200 text-blue-900 border-blue-300',    
+            'bg-red-200 text-red-900 border-red-300',        
+            'bg-blue-200 text-blue-900 border-blue-300',     
             'bg-green-200 text-green-900 border-green-300',   
             'bg-amber-200 text-amber-900 border-amber-300',   
             'bg-purple-200 text-purple-900 border-purple-300', 
-            'bg-cyan-200 text-cyan-900 border-cyan-300'       
+            'bg-cyan-200 text-cyan-900 border-cyan-300'        
         ];
         
         const scheduleStructure = [ { id: 1, type: 'lesson', start: '08:05', end: '08:50' }, { id: 2, type: 'lesson', start: '08:50', end: '09:35' }, { type: 'break', start: '09:35', end: '09:55', label: 'Pause' }, { id: 3, type: 'lesson', start: '09:55', end: '10:40' }, { id: 4, type: 'lesson', start: '10:40', end: '11:25' }, { type: 'break', start: '11:25', end: '11:45', label: 'Pause' }, { id: 5, type: 'lesson', start: '11:45', end: '12:30' }, { id: 6, type: 'lesson', start: '12:30', end: '13:15' }, { type: 'break', start: '13:15', end: '13:30', label: 'Pause' }, { id: 7, type: 'lesson', start: '13:30', end: '14:15' }, { id: 8, type: 'lesson', start: '14:50', end: '15:00' } ];
 
         // --- 2. STATE ---
         let classes = []; let selectedClassIndex = -1; let timetableData = {}; let blockedSlots = new Set(); let cursor = { day: 0, period: 1 }; let isBlockingMode = false; let magicSubjectKeys = ["MAT", "DEU", "ENG"]; let magicRules = []; let lastResultData = null; let confirmCallback = null;
-        
-        // NEW: State for hidden subjects
         let hiddenSubjects = new Set();
 
         // --- 3. UTILS ---
@@ -825,59 +819,61 @@
         function showToast(msg, isError = false) { const t = document.getElementById('toast'); const tm = document.getElementById('toastMsg'); tm.textContent = msg; t.className = isError ? 'toast error show' : 'toast show'; setTimeout(() => { t.classList.remove('show'); }, 3000); }
         function requestClearTimetable() { 
             disableBlockingMode(); 
-            document.getElementById('confirmText').textContent = "Möchtest du wirklich den gesamten Stundenplan löschen?"; document.getElementById('confirmModal').classList.add('show'); confirmCallback = () => { timetableData = {}; blockedSlots = new Set(); lastResultData = null; magicRules = []; renderTimetable(); updateLiveStats(); showToast("Plan gelöscht."); }; 
+            document.getElementById('confirmText').textContent = "Möchtest du wirklich den gesamten Stundenplan löschen?"; document.getElementById('confirmModal').classList.add('show'); confirmCallback = () => { timetableData = {}; blockedSlots = new Set(); lastResultData = null; magicRules = []; ensureZUP(); renderTimetable(); updateLiveStats(); showToast("Plan gelöscht."); }; 
         }
         function closeConfirm(result) { document.getElementById('confirmModal').classList.remove('show'); if (result && confirmCallback) confirmCallback(); confirmCallback = null; }
         
+        // ZUP Logic
+        function ensureZUP() {
+            const zupId = 'd2-p5';
+            // Only add if not present
+            if (!timetableData[zupId] || !timetableData[zupId].some(e => e.subject === 'ZUP')) {
+                // Clear any existing to be safe or append? Requirement says "immer", so let's force it clean
+                timetableData[zupId] = []; 
+                timetableData[zupId].push({ 
+                    subject: "ZUP", 
+                    className: "", 
+                    colorClass: "special-zup", 
+                    isMagicSelected: false, 
+                    isManual: true 
+                });
+            }
+        }
+
         function openPrintPreview() {
             disableBlockingMode();
+            updateHeaderColor('neutral');
             let html = '';
-            // Get inputs
             const name = document.getElementById('teacherNameInput').value || '_______________';
             const grade = document.getElementById('gradeLevelInput').value || '____';
             const year = document.getElementById('schoolYearInput').value || '____';
-            const currentDate = new Date().toLocaleDateString('de-DE'); // Get current date
+            const currentDate = new Date().toLocaleDateString('de-DE'); 
 
-            // DOC Header Structure - UPDATED
-            html += `<div class="doc-header-container">
-                        <div>
-                            <div class="doc-title">Stundenplan</div>
-                            <div class="doc-subtitle">Lehrkraft: ${name} | Jahrgang: ${grade} | Schuljahr: ${year}</div>
-                        </div>
-                        <div class="doc-date">${currentDate}</div>
-                     </div>`;
-            
+            html += `<div class="doc-header-container"><div><div class="doc-title">Stundenplan</div><div class="doc-subtitle">Lehrkraft: ${name} | Jahrgang: ${grade} | Schuljahr: ${year}</div></div><div class="doc-date">${currentDate}</div></div>`;
             html += '<table class="print-table"><thead><tr><th class="time-col">Zeit</th>';
             ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'].forEach(day => html += `<th>${day}</th>`);
             html += '</tr></thead><tbody>';
 
             scheduleStructure.forEach(slot => {
                 if (slot.type === 'break') {
-                    // Span break across
                     html += `<tr class="break-row"><td class="time-col" style="text-align:center;">-</td><td colspan="5">PAUSE (${slot.start} - ${slot.end})</td></tr>`;
                 } else {
-                    html += `<tr class="content-row">`;
-                    html += `<td class="time-col">${slot.id}.<br><span style="font-weight:normal; font-size:9pt;">${slot.start}<br>${slot.end}</span></td>`;
+                    html += `<tr class="content-row"><td class="time-col">${slot.id}.<br><span style="font-weight:normal; font-size:9pt;">${slot.start}<br>${slot.end}</span></td>`;
                     for (let day = 0; day < 5; day++) {
                         const cellId = `d${day}-p${slot.id}`;
                         const entries = timetableData[cellId] || [];
                         const selectedEntries = entries.filter(e => e.isMagicSelected || e.isManual);
                         let cellContent = '';
-                        
-                        // GLOBAL SUBJECT HANDLING
                         let globalEntry = selectedEntries.find(e => GLOBAL_SUBJECTS.includes(e.subject));
-                        
                         if (globalEntry) {
-                             const allClassesString = classes.map(c => c.name).join(', ');
-                             
-                             // Add specific class for gray styling
+                             let subText = classes.map(c => c.name).join(', ');
+                             if (globalEntry.subject === 'ZUP') subText = 'Teamsitzung';
                              let styleClass = 'global-chip';
                              if (globalEntry.subject === 'FÖA') styleClass += ' special-foea';
                              else if (['WPF', 'SPA', 'TUE'].includes(globalEntry.subject)) styleClass += ' special-wpf';
-                             
-                             cellContent = `<div class="print-cell-content ${styleClass}"><span class="preview-subject">${globalEntry.subject}</span><span class="preview-class">${allClassesString}</span></div>`;
-                        }
-                        else if (selectedEntries.length > 0) {
+                             else if (globalEntry.subject === 'ZUP') styleClass += ' special-zup';
+                             cellContent = `<div class="print-cell-content ${styleClass}"><span class="preview-subject">${globalEntry.subject}</span><span class="preview-class">${subText}</span></div>`;
+                        } else if (selectedEntries.length > 0) {
                             const e = selectedEntries[0];
                             cellContent = `<div class="print-cell-content ${e.colorClass}"><span class="preview-subject">${e.subject}</span><span class="preview-class">${e.className}</span></div>`;
                         }
@@ -891,205 +887,85 @@
             document.getElementById('printPreviewModal').classList.add('show');
         }
 
-        // METADATA TOGGLE FUNCTION
-        function toggleMetaData() {
-            const content = document.getElementById('metaDataContent');
-            const chevron = document.getElementById('metaDataChevron');
-            
-            if (content.classList.contains('collapsed')) {
-                content.classList.remove('collapsed');
-                chevron.classList.add('rotate-180');
+        // --- NEW STATS POSITION LOGIC ---
+        function toggleStatsPosition() {
+            const stats = document.getElementById('statsFooter');
+            const content = document.getElementById('liveStatsContent'); // Get content div
+            const targetHours = document.getElementById('targetHoursSection');
+            const aside = document.querySelector('aside');
+            const arrow = document.getElementById('statsPositionArrow');
+
+            if (stats.dataset.position === 'top') {
+                stats.dataset.position = 'bottom';
+                stats.className = "p-3 bg-slate-50 border-t border-gray-200 mt-auto"; 
+                aside.appendChild(stats);
+                // Reset height
+                content.classList.remove('max-h-[60vh]');
+                content.classList.add('max-h-32');
+                
+                if(arrow) { arrow.classList.remove('rotate-180'); arrow.classList.add('fa-chevron-up'); arrow.classList.remove('fa-chevron-down'); }
             } else {
-                content.classList.add('collapsed');
-                chevron.classList.remove('rotate-180');
+                stats.dataset.position = 'top';
+                stats.className = "bg-blue-50 border border-blue-100 rounded-lg p-2 mb-4 shrink-0 transition-all duration-300 shadow-sm";
+                targetHours.insertAdjacentElement('afterend', stats);
+                // Expand height
+                content.classList.remove('max-h-32');
+                content.classList.add('max-h-[60vh]');
+                
+                if(arrow) { arrow.classList.add('rotate-180'); arrow.classList.remove('fa-chevron-up'); arrow.classList.add('fa-chevron-down'); }
             }
         }
 
         // --- TOUR LOGIC ---
         let currentTourStep = 0;
         const tourSteps = [
-            { 
-                targetId: null, 
-                title: "Willkommen beim SopädStundenplaner!", 
-                text: "Dieses Tool beherrscht zwei Dinge: 1. Das manuelle Erstellen von Stundenplänen. 2. Die automatische Erstellung und Kombination von mehreren Stundenplänen." 
-            },
-            { 
-                targetId: "personalDataSection", 
-                title: "1. Wer bist du?", 
-                text: "Klappe dieses Menü auf, um deinen Namen, Jahrgang und das Schuljahr einzutragen. Das erscheint später auf dem Ausdruck." 
-            },
-            { 
-                targetId: "classInputSection", 
-                title: "2. Klassen anlegen", 
-                text: "Erstelle hier nacheinander alle deine Klassen (z.B. 6a, 6b...) und bestätige jeweils mit Enter." 
-            },
-            { 
-                targetId: "subjectSection", 
-                title: "3. Manuelles Ausfüllen", 
-                text: "Wähle oben eine Klasse aus. Tippe dann hier links ein Fach an. Der Planer beginnt bei Mo-1.Std und springt automatisch weiter. Fertig? Dann wähle die nächste Klasse." 
-            },
-            { 
-                targetId: "mainTimetable", 
-                title: "4. Strategie-Wahl", 
-                text: "Jetzt entscheidest du: Entweder klickst du deine Fächer im Plan an, um sie manuell zu belegen (sie werden farbig). Oder... jetzt kommt die Magie: Du lässt Auto-Verteilen." 
-            },
-            { 
-                targetId: "targetHoursSection", 
-                title: "5. Vorbereitung Auto", 
-                text: "Bevor du 'Auto' drückst: 1. Lege dein Stunden-Ziel fest (gelbes Feld). 2. Nutze 'Sperren' (⛔), um Zeiten zu blockieren, an denen du nicht kannst." 
-            },
-             { 
-                targetId: "btnMagicSettings", 
-                title: "6. Fächer-Pool", 
-                text: "Hinter dem Zahnrad verbirgt sich die Fächerauswahl. Hier kannst du neue Fächer anlegen oder nicht benötigte Fächer ausblenden, um die Übersicht zu behalten (z.B. Fächer anderer Jahrgänge)."
-            },
-             { 
-                targetId: "btnRules", 
-                title: "7. Regeln", 
-                text: "Im Button daneben (Regeln) kannst du Zwänge definieren: Z.B. 'Ich muss in der 6e unbedingt 2x Mathe machen'." 
-            },
-             { 
-                targetId: "mainTimetable", 
-                title: "8. Pinnen", 
-                text: "Auch im Plan selbst kannst du steuern: Klicke ein Fach an, um es zu 'Pinnen' (Grüner Rahmen). Diese Stunde bleibt dann garantiert erhalten." 
-            },
-            { 
-                targetId: "autoButtonSection", 
-                title: "9. Auto-Start", 
-                text: "Klicke auf 'Auto'. Dein persönlicher Plan wird nun nach deinen Wünschen und Regeln optimal berechnet." 
-            },
-            { 
-                targetId: "statsFooter", 
-                title: "10. Verteilung", 
-                text: "Prüfe unter 'Verteilung', wie fair die Stunden gewichtet sind. Manuelle Änderungen aktualisieren diese Anzeige sofort." 
-            },
-            {
-                targetId: "demoDataBtn",
-                title: "11. Demo-Modus",
-                text: "Noch unsicher? Klicke auf 'Demo', um den Plan einmal komplett mit Testdaten zu füllen. So siehst du sofort, wie alles fertig aussieht."
-            },
-            { 
-                targetId: "toolbarActions", 
-                title: "12. Toolbar & Hilfe", 
-                text: "Hier oben findest du Speichern, Drucken und die Hilfe (?). Im Hilfe-Menü kannst du diese Tour jederzeit neu starten und die ausführliche Anleitung lesen. Viel Erfolg!" 
-            }
+            { targetId: null, title: "Willkommen beim SopädStundenplaner!", text: "Dieses Tool beherrscht zwei Dinge: 1. Das manuelle Erstellen von Stundenplänen. 2. Die automatische Erstellung und Kombination von mehreren Stundenplänen." },
+            { targetId: "personalDataSection", title: "1. Wer bist du?", text: "Trage oben deinen Namen, Jahrgang und das Schuljahr ein. Das erscheint später auf dem Ausdruck." },
+            { targetId: "classInputSection", title: "2. Klassen anlegen", text: "Erstelle hier nacheinander alle deine Klassen (z.B. 6a, 6b...) und bestätige jeweils mit Enter." },
+            { targetId: "subjectSection", title: "3. Manuelles Ausfüllen", text: "Wähle oben eine Klasse aus. Tippe dann hier links ein Fach an. Der Planer beginnt bei Mo-1.Std und springt automatisch weiter. Fertig? Dann wähle die nächste Klasse." },
+            { targetId: "mainTimetable", title: "4. Strategie-Wahl", text: "Jetzt entscheidest du: Entweder klickst du deine Fächer im Plan an, um sie manuell zu belegen (sie werden farbig). Oder... jetzt kommt die Magie: Du lässt Auto-Verteilen." },
+            { targetId: "targetHoursSection", title: "5. Vorbereitung Auto", text: "Bevor du 'Auto' drückst: 1. Lege dein Stunden-Ziel fest (gelbes Feld). 2. Nutze 'Sperren' (⛔), um Zeiten zu blockieren, an denen du nicht kannst." },
+            { targetId: "btnMagicSettings", title: "6. Fächer-Pool", text: "Hinter dem Zahnrad verbirgt sich die Fächerauswahl. Hier kannst du neue Fächer anlegen oder nicht benötigte Fächer ausblenden." },
+            { targetId: "btnRules", title: "7. Regeln", text: "Im Button daneben (Regeln) kannst du Zwänge definieren: Z.B. 'Ich muss in der 6e unbedingt 2x Mathe machen'." },
+            { targetId: "mainTimetable", title: "8. Pinnen", text: "Auch im Plan selbst kannst du steuern: Klicke ein Fach an, um es zu 'Pinnen' (Grüner Rahmen). Diese Stunde bleibt dann garantiert erhalten." },
+            { targetId: "autoButtonSection", title: "9. Auto-Start", text: "Klicke auf 'Auto'. Dein persönlicher Plan wird nun nach deinen Wünschen und Regeln optimal berechnet." },
+            { targetId: "statsFooter", title: "10. Verteilung", text: "Prüfe unter 'Verteilung', wie fair die Stunden gewichtet sind. Manuelle Änderungen aktualisieren diese Anzeige sofort." },
+            { targetId: "demoDataBtn", title: "11. Demo-Modus", text: "Noch unsicher? Klicke auf 'Demo', um den Plan einmal komplett mit Testdaten zu füllen." },
+            { targetId: "toolbarActions", title: "12. Toolbar & Hilfe", text: "Hier oben findest du Speichern, Drucken und die Hilfe (?)." }
         ];
 
-        function startTour() {
-            if(classes.length === 0) {
-                 // Ensure metadata is expanded for the tour if feasible
-                 const content = document.getElementById('metaDataContent');
-                 if(content.classList.contains('collapsed')) toggleMetaData();
-            }
-            currentTourStep = 0;
-            document.getElementById('tourOverlay').classList.add('active');
-            showTourStep();
-        }
-
-        function endTour() {
-            document.getElementById('tourOverlay').classList.remove('active');
-            const dontShow = document.getElementById('tourDontShowAgain').checked;
-            if(dontShow) localStorage.setItem('stundenplan_tour_seen', 'true');
-        }
-
-        function nextTourStep() {
-            currentTourStep++;
-            if(currentTourStep >= tourSteps.length) {
-                endTour();
-            } else {
-                showTourStep();
-            }
-        }
-
+        function startTour() { currentTourStep = 0; document.getElementById('tourOverlay').classList.add('active'); showTourStep(); }
+        function endTour() { document.getElementById('tourOverlay').classList.remove('active'); const dontShow = document.getElementById('tourDontShowAgain').checked; if(dontShow) localStorage.setItem('stundenplan_tour_seen', 'true'); }
+        function nextTourStep() { currentTourStep++; if(currentTourStep >= tourSteps.length) { endTour(); } else { showTourStep(); } }
         function showTourStep() {
             const step = tourSteps[currentTourStep];
             const tooltip = document.getElementById('tourTooltip');
             const spotlight = document.getElementById('tourSpotlight');
-            
             document.getElementById('tourTitle').textContent = step.title;
             document.getElementById('tourText').textContent = step.text;
-            
-            tooltip.classList.remove('visible'); // Fade out slightly
-
+            tooltip.classList.remove('visible'); 
             if (step.targetId) {
                 const target = document.getElementById(step.targetId);
                 const rect = target.getBoundingClientRect();
-                
-                // Position Spotlight
-                spotlight.style.width = (rect.width + 10) + 'px';
-                spotlight.style.height = (rect.height + 10) + 'px';
-                spotlight.style.top = (rect.top - 5) + 'px';
-                spotlight.style.left = (rect.left - 5) + 'px';
-                spotlight.style.opacity = '1';
-
-                // SMART POSITIONING LOGIC
-                const tooltipWidth = 340; // Approx width from CSS
-                const padding = 10;
-
-                // Default: Try Right
-                let left = rect.right + 20;
-                let top = rect.top;
-
-                // If going off right screen, try Left
-                if (left + tooltipWidth > window.innerWidth) {
-                    left = rect.left - tooltipWidth - 20;
-                }
-                
-                // If going off left screen (e.g. sidebar item), try Bottom
-                if (left < padding) {
-                     left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-                     top = rect.bottom + 20;
-                }
-
-                // Vertical Clamping
-                if (top + 200 > window.innerHeight) {
-                    top = Math.max(padding, window.innerHeight - 250);
-                }
-                
-                // Horizontal Clamping (Final Safety)
+                spotlight.style.width = (rect.width + 10) + 'px'; spotlight.style.height = (rect.height + 10) + 'px'; spotlight.style.top = (rect.top - 5) + 'px'; spotlight.style.left = (rect.left - 5) + 'px'; spotlight.style.opacity = '1';
+                const tooltipWidth = 340; const padding = 10;
+                let left = rect.right + 20; let top = rect.top;
+                if (left + tooltipWidth > window.innerWidth) { left = rect.left - tooltipWidth - 20; }
+                if (left < padding) { left = rect.left + (rect.width / 2) - (tooltipWidth / 2); top = rect.bottom + 20; }
+                if (top + 200 > window.innerHeight) { top = Math.max(padding, window.innerHeight - 250); }
                 left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
-                
-                tooltip.style.top = top + 'px';
-                tooltip.style.left = left + 'px';
-
+                tooltip.style.top = top + 'px'; tooltip.style.left = left + 'px';
             } else {
-                // Center Step (Welcome)
-                spotlight.style.width = '0px';
-                spotlight.style.height = '0px';
-                spotlight.style.opacity = '0';
-                spotlight.style.top = '50%';
-                spotlight.style.left = '50%';
-                
-                tooltip.style.top = '50%';
-                tooltip.style.left = '50%';
-                tooltip.style.transform = 'translate(-50%, -50%)';
+                spotlight.style.width = '0px'; spotlight.style.height = '0px'; spotlight.style.opacity = '0'; spotlight.style.top = '50%'; spotlight.style.left = '50%';
+                tooltip.style.top = '50%'; tooltip.style.left = '50%'; tooltip.style.transform = 'translate(-50%, -50%)';
             }
-            
-            // Clean up transform if we used it for centering
             if(step.targetId) tooltip.style.transform = 'none';
-
             setTimeout(() => tooltip.classList.add('visible'), 50);
         }
 
         function exportToFile() {
-            // UPDATED EXPORT TO INCLUDE SCHOOL YEAR AND HIDDEN SUBJECTS
-            const data = { 
-                classes, 
-                timetableData, 
-                blockedSlots: Array.from(blockedSlots), 
-                magicRules, 
-                magicSubjectKeys, 
-                teacherHours: document.getElementById('teacherHours').value, 
-                teacherName: document.getElementById('teacherNameInput').value, 
-                gradeLevel: document.getElementById('gradeLevelInput').value,
-                schoolYear: document.getElementById('schoolYearInput').value,
-                // NEW EXPORTS
-                allSubjects,
-                hiddenSubjects: Array.from(hiddenSubjects)
-            };
-            const json = JSON.stringify(data, null, 2);
-            const blob = new Blob([json], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
+            const data = { classes, timetableData, blockedSlots: Array.from(blockedSlots), magicRules, magicSubjectKeys, teacherHours: document.getElementById('teacherHours').value, teacherName: document.getElementById('teacherNameInput').value, gradeLevel: document.getElementById('gradeLevelInput').value, schoolYear: document.getElementById('schoolYearInput').value, allSubjects, hiddenSubjects: Array.from(hiddenSubjects) };
+            const json = JSON.stringify(data, null, 2); const blob = new Blob([json], { type: "application/json" }); const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `stundenplan_${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); showToast("Datei heruntergeladen!");
         }
         function importFromFile(input) {
@@ -1099,43 +975,14 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     classes = data.classes || []; timetableData = data.timetableData || {}; blockedSlots = new Set(data.blockedSlots || []); magicRules = data.magicRules || []; magicSubjectKeys = data.magicSubjectKeys || ["MAT", "DEU", "ENG"];
-                    if(data.teacherHours) document.getElementById('teacherHours').value = data.teacherHours;
-                    if(data.teacherName) document.getElementById('teacherNameInput').value = data.teacherName;
-                    if(data.gradeLevel) document.getElementById('gradeLevelInput').value = data.gradeLevel;
-                    if(data.schoolYear) document.getElementById('schoolYearInput').value = data.schoolYear;
-                    
-                    // NEW IMPORTS
-                    if(data.allSubjects) allSubjects = data.allSubjects;
-                    if(data.hiddenSubjects) hiddenSubjects = new Set(data.hiddenSubjects);
-                    
+                    if(data.teacherHours) document.getElementById('teacherHours').value = data.teacherHours; if(data.teacherName) document.getElementById('teacherNameInput').value = data.teacherName; if(data.gradeLevel) document.getElementById('gradeLevelInput').value = data.gradeLevel; if(data.schoolYear) document.getElementById('schoolYearInput').value = data.schoolYear;
+                    if(data.allSubjects) allSubjects = data.allSubjects; if(data.hiddenSubjects) hiddenSubjects = new Set(data.hiddenSubjects);
+                    ensureZUP(); // Ensure ZUP is present after import
                     renderClasses(); if (classes.length > 0) selectClass(0); else selectedClassIndex = -1; renderTimetable(); updateLiveStats(); showToast("Plan importiert!");
-                } catch (err) { showToast("Fehler beim Import: " + err.message, true); }
-                input.value = '';
-            };
-            reader.readAsText(file);
+                } catch (err) { showToast("Fehler beim Import: " + err.message, true); } input.value = '';
+            }; reader.readAsText(file);
         }
 
-        // NEW: Toggle Stats Panel Logic
-        function toggleStatsPanel(forceOpen = null) { 
-            const content = document.getElementById('liveStatsContent'); 
-            const btn = document.getElementById('statsToggleBtn');
-            const isCurrentlyExpanded = content.classList.contains('h-[60vh]');
-            
-            let shouldOpen = forceOpen !== null ? forceOpen : !isCurrentlyExpanded;
-
-            if (shouldOpen) {
-                // EXPAND
-                content.classList.remove('max-h-32');
-                content.classList.add('h-[60vh]');
-                btn.classList.add('rotate-180');
-            } else {
-                // COLLAPSE
-                content.classList.remove('h-[60vh]');
-                content.classList.add('max-h-32');
-                btn.classList.remove('rotate-180');
-            }
-        }
-        
         function updateRulesFromPin(className, subject) {
             let pinCount = 0; for (const key in timetableData) { timetableData[key].forEach(e => { if (e.isManual && e.className === className && e.subject === subject) pinCount++; }); }
             let ruleIdx = magicRules.findIndex(r => r.className === className && r.subject === subject);
@@ -1143,228 +990,87 @@
             if(document.getElementById('rulesModal').classList.contains('show')) renderRuleList();
         }
 
-        // --- NEW SMART RULE LOGIC ---
-        function openRulesModal() { 
-            disableBlockingMode();
-            if (classes.length === 0) { showToast("Bitte erst Klassen erstellen!", true); return; } 
-            updateRuleFormOptions(); 
-            renderRuleList(); 
-            document.getElementById('rulesModal').classList.add('show'); 
-        }
-
+        function openRulesModal() { disableBlockingMode(); updateHeaderColor('neutral'); if (classes.length === 0) { showToast("Bitte erst Klassen erstellen!", true); return; } updateRuleFormOptions(); renderRuleList(); document.getElementById('rulesModal').classList.add('show'); }
         function closeRulesModal() { document.getElementById('rulesModal').classList.remove('show'); }
-        
         function updateRuleFormOptions() { 
-            const classSelect = document.getElementById('ruleClassSelect');
+            const classSelect = document.getElementById('ruleClassSelect'); 
             classSelect.innerHTML = classes.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); 
             
-            // NEW: Auto-select active class from sidebar
-            if(selectedClassIndex > -1 && classes[selectedClassIndex]) {
-                classSelect.value = classes[selectedClassIndex].name;
+            // Check for WPF/FÖA entries to show "Kurs" option
+            const hasSpecialCourses = Object.values(timetableData).some(entries => 
+                entries.some(e => ['WPF', 'FÖA'].includes(e.subject))
+            );
+            if (hasSpecialCourses) {
+                classSelect.innerHTML += '<option value="Kurs">Kurs</option>';
             }
 
-            // NEW: Add Listener for dynamic updates
-            classSelect.onchange = updateRuleSubjectOptions;
-            
-            // Trigger subject update initially
+            if(selectedClassIndex > -1 && classes[selectedClassIndex]) { classSelect.value = classes[selectedClassIndex].name; } 
+            classSelect.onchange = updateRuleSubjectOptions; 
             updateRuleSubjectOptions(); 
         }
-
         function updateRuleSubjectOptions() {
-            const classSelect = document.getElementById('ruleClassSelect');
-            const subjectSelect = document.getElementById('ruleSubjectSelect');
+            const classSelect = document.getElementById('ruleClassSelect'); 
+            const subjectSelect = document.getElementById('ruleSubjectSelect'); 
             const className = classSelect.value;
             
-            if(!className) {
-                subjectSelect.innerHTML = '';
+            if(!className) { subjectSelect.innerHTML = ''; return; }
+            
+            if (className === 'Kurs') {
+                const courseSubjects = new Set();
+                Object.values(timetableData).forEach(entries => {
+                    entries.forEach(e => {
+                        if (['WPF', 'FÖA'].includes(e.subject)) {
+                            courseSubjects.add(e.subject);
+                        }
+                    });
+                });
+                const sorted = Array.from(courseSubjects).sort();
+                if(sorted.length === 0) { 
+                    subjectSelect.innerHTML = '<option value="">(Leer)</option>'; 
+                } else { 
+                    subjectSelect.innerHTML = sorted.map(s => `<option value="${s}">${s}</option>`).join(''); 
+                }
                 return;
             }
 
-            // FILTER: Find only subjects used in the timetable for this class
-            const usedSubjects = new Set();
-            for(const key in timetableData) {
-                timetableData[key].forEach(entry => {
-                    if(entry.className === className && entry.subject !== '---') {
-                        usedSubjects.add(entry.subject);
-                    }
-                });
-            }
-
+            const usedSubjects = new Set(); for(const key in timetableData) { timetableData[key].forEach(entry => { if(entry.className === className && entry.subject !== '---') { usedSubjects.add(entry.subject); } }); }
             const sorted = Array.from(usedSubjects).sort();
-            
-            if(sorted.length === 0) {
-                 subjectSelect.innerHTML = '<option value="">(Keine Fächer im Plan)</option>';
-            } else {
-                 subjectSelect.innerHTML = sorted.map(s => `<option value="${s}">${s}</option>`).join('');
-            }
+            if(sorted.length === 0) { subjectSelect.innerHTML = '<option value="">(Keine Fächer im Plan)</option>'; } else { subjectSelect.innerHTML = sorted.map(s => `<option value="${s}">${s}</option>`).join(''); }
         }
-
         function addRule() { const c = document.getElementById('ruleClassSelect').value; const s = document.getElementById('ruleSubjectSelect').value; const h = parseInt(document.getElementById('ruleCountInput').value); if (!c || !s || !h) return; const existingIdx = magicRules.findIndex(r => r.className === c && r.subject === s); if (existingIdx > -1) magicRules[existingIdx].hours = h; else magicRules.push({ className: c, subject: s, hours: h }); renderRuleList(); }
         function deleteRule(index) { magicRules.splice(index, 1); renderRuleList(); }
         function renderRuleList() { const list = document.getElementById('ruleList'); list.innerHTML = ''; if (magicRules.length === 0) { list.innerHTML = '<div class="text-center text-gray-400 italic text-sm py-4">Keine Regeln definiert.</div>'; return; } magicRules.forEach((r, idx) => { const div = document.createElement('div'); div.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-200 shadow-sm"; div.innerHTML = `<div class="flex items-center gap-2 text-sm"><span class="font-bold text-gray-800 bg-gray-100 px-2 rounded">${r.className}</span><span class="text-gray-600">${r.subject}</span><span class="text-blue-600 font-bold ml-2">Min: ${r.hours} Std.</span></div><button onclick="deleteRule(${idx})" class="text-red-400 hover:text-red-600 px-2"><i class="fas fa-trash"></i></button>`; list.appendChild(div); }); }
 
-        // --- NEW SUBJECT MANAGEMENT LOGIC ---
-
         function handleNewSubjectEnter(e) { if(e.key === 'Enter') addNewSubject(); }
-        
-        function addNewSubject() {
-            const input = document.getElementById('newSubjectInput');
-            const val = input.value.trim().toUpperCase();
-            if(!val) return;
-            
-            if(allSubjects.includes(val)) {
-                showToast("Fach existiert bereits!", true);
-                return;
-            }
-            
-            allSubjects.push(val);
-            input.value = '';
-            
-            // Re-render settings list, clear filter
-            renderMagicSettingsList(); 
-            renderSubjects(); // Update sidebar immediately
-            showToast("Fach hinzugefügt: " + val);
-        }
-        
-        // NEW: Filter function for the settings list
-        function filterMagicSettings(query) {
-            renderMagicSettingsList(query);
-        }
-
-        function deleteCustomSubject(subj) {
-             if(confirm(`Fach "${subj}" wirklich löschen?`)) {
-                 allSubjects = allSubjects.filter(s => s !== subj);
-                 // Also clean up hidden and magic arrays
-                 hiddenSubjects.delete(subj);
-                 magicSubjectKeys = magicSubjectKeys.filter(s => s !== subj);
-                 
-                 // Re-render, keeping current filter if input has value
-                 const currentFilter = document.getElementById('newSubjectInput').value;
-                 renderMagicSettingsList(currentFilter);
-                 renderSubjects();
-             }
-        }
-        
-        function toggleSubjectVisibility(subj) {
-            if(hiddenSubjects.has(subj)) {
-                hiddenSubjects.delete(subj);
-            } else {
-                hiddenSubjects.add(subj);
-            }
-            // Re-render, keeping current filter
-            const currentFilter = document.getElementById('newSubjectInput').value;
-            renderMagicSettingsList(currentFilter);
-            renderSubjects(); // Update main sidebar
-        }
-        
-        // NEW HELPER FUNCTIONS FOR BULK ACTIONS
-        function deselectAllMagic() {
-            magicSubjectKeys = [];
-            // Re-render list
-            const currentFilter = document.getElementById('newSubjectInput').value;
-            renderMagicSettingsList(currentFilter);
-            showToast("Alle Auto-Haken entfernt.");
-        }
-        
-        function showAllSubjects() {
-            hiddenSubjects.clear();
-             // Re-render list
-            const currentFilter = document.getElementById('newSubjectInput').value;
-            renderMagicSettingsList(currentFilter);
-            renderSubjects(); // Update sidebar
-            showToast("Alle Fächer sichtbar.");
-        }
-
-        // Context Menu Handler for Sidebar
-        function hideSubject(e, subj) {
-            e.preventDefault(); // Stop normal context menu
-            if(subj === '---') return; // Cannot hide separator
-            
-            hiddenSubjects.add(subj);
-            renderSubjects();
-            showToast(`${subj} ausgeblendet (wiederherstellen über Zahnrad)`);
-        }
-
-        function openMagicSettings() { 
-            disableBlockingMode();
-            document.getElementById('magicSettingsModal').classList.add('show'); 
-            document.getElementById('newSubjectInput').value = ''; // Clear filter on open
-            document.getElementById('newSubjectInput').focus();
-            renderMagicSettingsList();
-        }
-
-        // HELPER FOR VISIBILITY
-        function isSubjectVisible(subj) {
-            return !hiddenSubjects.has(subj);
-        }
-        
+        function addNewSubject() { const input = document.getElementById('newSubjectInput'); const val = input.value.trim().toUpperCase(); if(!val) return; if(allSubjects.includes(val)) { showToast("Fach existiert bereits!", true); return; } allSubjects.push(val); input.value = ''; renderMagicSettingsList(); renderSubjects(); showToast("Fach hinzugefügt: " + val); }
+        function filterMagicSettings(query) { renderMagicSettingsList(query); }
+        function deleteCustomSubject(subj) { if(confirm(`Fach "${subj}" wirklich löschen?`)) { allSubjects = allSubjects.filter(s => s !== subj); hiddenSubjects.delete(subj); magicSubjectKeys = magicSubjectKeys.filter(s => s !== subj); const currentFilter = document.getElementById('newSubjectInput').value; renderMagicSettingsList(currentFilter); renderSubjects(); } }
+        function toggleSubjectVisibility(subj) { if(hiddenSubjects.has(subj)) { hiddenSubjects.delete(subj); } else { hiddenSubjects.add(subj); } const currentFilter = document.getElementById('newSubjectInput').value; renderMagicSettingsList(currentFilter); renderSubjects(); }
+        function deselectAllMagic() { magicSubjectKeys = []; const currentFilter = document.getElementById('newSubjectInput').value; renderMagicSettingsList(currentFilter); showToast("Alle Auto-Haken entfernt."); }
+        function showAllSubjects() { hiddenSubjects.clear(); const currentFilter = document.getElementById('newSubjectInput').value; renderMagicSettingsList(currentFilter); renderSubjects(); showToast("Alle Fächer sichtbar."); }
+        function hideSubject(e, subj) { e.preventDefault(); if(subj === '---') return; hiddenSubjects.add(subj); renderSubjects(); showToast(`${subj} ausgeblendet (wiederherstellen über Zahnrad)`); }
+        function openMagicSettings() { disableBlockingMode(); updateHeaderColor('neutral'); document.getElementById('magicSettingsModal').classList.add('show'); document.getElementById('newSubjectInput').value = ''; document.getElementById('newSubjectInput').focus(); renderMagicSettingsList(); }
+        function isSubjectVisible(subj) { return !hiddenSubjects.has(subj); }
         function renderMagicSettingsList(filterText = '') {
-            const list = document.getElementById('magicSettingsList'); 
-            list.innerHTML = ''; 
-            
-            const upperFilter = filterText.toUpperCase().trim();
-
+            const list = document.getElementById('magicSettingsList'); list.innerHTML = ''; const upperFilter = filterText.toUpperCase().trim();
             allSubjects.filter(s => s !== '---').forEach(subj => { 
-                // FILTER LOGIC
                 if(upperFilter && !subj.includes(upperFilter)) return;
-
-                const isChecked = magicSubjectKeys.includes(subj); 
-                
-                // VISIBILITY LOGIC (USING HELPER + LOCAL GRADE CHECK)
-                const isVisible = isSubjectVisible(subj);
-                
-                // Base Styling
-                let rowClass = "flex justify-between items-center p-2 rounded hover:bg-gray-50 border-b border-gray-100 last:border-0";
-                if (!isVisible) rowClass += " bg-gray-100 opacity-75"; // Visual cue for hidden
-                
-                const div = document.createElement('div'); 
-                div.className = rowClass;
-                
-                // Checkbox for MAGIC (Right side)
-                // UPDATED: Added opacity and pointer-events-none if hidden
+                const isChecked = magicSubjectKeys.includes(subj); const isVisible = isSubjectVisible(subj);
+                let rowClass = "flex justify-between items-center p-2 rounded hover:bg-gray-50 border-b border-gray-100 last:border-0"; if (!isVisible) rowClass += " bg-gray-100 opacity-75"; 
+                const div = document.createElement('div'); div.className = rowClass;
                 const checkStyle = isVisible ? '' : 'opacity-20 pointer-events-none';
                 const magicCheck = `<input type="checkbox" onchange="toggleMagicKey('${subj}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500 border-gray-300 ${checkStyle}">`;
-                
-                // Toggle for VISIBILITY (Eye)
                 const visIcon = isVisible ? 'fa-eye text-gray-600' : 'fa-eye-slash text-gray-400';
                 const visBtn = `<button onclick="toggleSubjectVisibility('${subj}')" class="w-6 text-center hover:bg-gray-200 rounded p-0.5"><i class="fas ${visIcon}"></i></button>`;
-                
-                // Delete button (Only for non-default? For now allow all, but maybe warn. Actually let's allow all for flexibility)
                 const deleteBtn = `<button onclick="deleteCustomSubject('${subj}')" class="text-gray-300 hover:text-red-500 ml-2 w-4"><i class="fas fa-trash-alt text-xs"></i></button>`;
-
-                div.innerHTML = `
-                    <span class="text-sm font-medium ${!isVisible ? 'text-gray-500 line-through' : 'text-gray-700'}">${subj}</span>
-                    <div class="flex items-center gap-4">
-                        ${visBtn}
-                        ${magicCheck}
-                        ${deleteBtn}
-                    </div>
-                `; 
-                list.appendChild(div); 
+                div.innerHTML = `<span class="text-sm font-medium ${!isVisible ? 'text-gray-500 line-through' : 'text-gray-700'}">${subj}</span><div class="flex items-center gap-4">${visBtn}${magicCheck}${deleteBtn}</div>`; list.appendChild(div); 
             }); 
-            
-            if(list.children.length === 0 && filterText) {
-                list.innerHTML = `<div class="text-center text-gray-400 text-xs py-4">"${filterText}" nicht gefunden.<br>Drücke <b>+</b> zum Erstellen.</div>`;
-            }
+            if(list.children.length === 0 && filterText) { list.innerHTML = `<div class="text-center text-gray-400 text-xs py-4">"${filterText}" nicht gefunden.<br>Drücke <b>+</b> zum Erstellen.</div>`; }
         }
-
-        function toggleMagicKey(subj) {
-            if(magicSubjectKeys.includes(subj)) {
-                magicSubjectKeys = magicSubjectKeys.filter(s => s !== subj);
-            } else {
-                magicSubjectKeys.push(subj);
-            }
-            // No need to re-render list, checkbox handles itself visually
-        }
-
-        function saveMagicSettings() { 
-            // Saving is live in this version, so just close
-            closeMagicSettings(); 
-            showToast("Einstellungen übernommen."); 
-        }
+        function toggleMagicKey(subj) { if(magicSubjectKeys.includes(subj)) { magicSubjectKeys = magicSubjectKeys.filter(s => s !== subj); } else { magicSubjectKeys.push(subj); } }
+        function saveMagicSettings() { closeMagicSettings(); showToast("Einstellungen übernommen."); }
         function closeMagicSettings() { document.getElementById('magicSettingsModal').classList.remove('show'); }
         
-        // --- 5. LOGIC & ALGORITHMS (TRUE FAIRNESS + REBALANCING V4) ---
         function generateStatsHTML(targetHours) {
             let currentAssigned = 0; let classCounts = {}; let classSubjectStats = {}; let globalCounts = {};
             classes.forEach(c => { classCounts[c.name] = 0; classSubjectStats[c.name] = {}; });
@@ -1411,230 +1117,118 @@
              document.getElementById('resultModal').classList.add('show');
         }
 
-        function closeResult() { document.getElementById('resultModal').classList.remove('show'); }
+        function closeResult() { 
+            document.getElementById('resultModal').classList.remove('show');
+            // Auto move stats to top on close if not already top
+            const stats = document.getElementById('statsFooter');
+            if(stats.dataset.position !== 'top') {
+                toggleStatsPosition();
+            }
+        }
+        
         function reopenResult() { 
             disableBlockingMode();
+            updateHeaderColor('neutral');
             showResult(null, null, document.getElementById('totalAssignedBadge').textContent.split('/')[0], document.getElementById('teacherHours').value); 
         }
         
-        function toggleBlockingMode() { isBlockingMode = !isBlockingMode; const btn = document.getElementById('blockToggleBtn'); if (isBlockingMode) { btn.classList.remove('bg-white', 'text-red-500'); btn.classList.add('bg-red-500', 'text-white'); btn.innerHTML = `<i class="fas fa-check"></i>`; document.body.classList.add('blocking-active'); } else { btn.classList.remove('bg-red-500', 'text-white'); btn.classList.add('bg-white', 'text-red-500'); btn.innerHTML = `<i class="fas fa-ban"></i>`; document.body.classList.remove('blocking-active'); } }
-        
-        // NEW Helper to auto-exit blocking mode
-        function disableBlockingMode() {
-            if (isBlockingMode) {
-                toggleBlockingMode();
-            }
+        function toggleBlockingMode() { 
+            isBlockingMode = !isBlockingMode; 
+            const btn = document.getElementById('blockToggleBtn'); 
+            if (isBlockingMode) { 
+                updateHeaderColor('neutral'); 
+                btn.classList.remove('bg-white', 'text-red-500'); btn.classList.add('bg-red-500', 'text-white'); btn.innerHTML = `<i class="fas fa-check"></i>`; document.body.classList.add('blocking-active'); 
+            } else { 
+                btn.classList.remove('bg-red-500', 'text-white'); btn.classList.add('bg-white', 'text-red-500'); btn.innerHTML = `<i class="fas fa-ban"></i>`; document.body.classList.remove('blocking-active'); 
+            } 
         }
         
+        function disableBlockingMode() { if (isBlockingMode) { toggleBlockingMode(); } }
         function clearMagicSelection() { for (const key in timetableData) { timetableData[key].forEach(entry => { if (!entry.isManual) entry.isMagicSelected = false; }); } renderTimetable(); updateLiveStats(); }
         
         function runMagicAlgorithm() {
-            disableBlockingMode();
-            clearMagicSelection();
-            const targetHours = parseInt(document.getElementById('teacherHours').value) || 27;
-            let currentAssigned = 0;
-            const isMainSubject = (subj) => magicSubjectKeys.includes(subj);
-            let teacherGrid = Array(5).fill().map(() => Array(10).fill(false)); 
-            
-            // Diagnostics
-            let potentialSlotsCount = 0; 
-            let blockedMissesCount = 0;
-            // 0. Pre-Scan: Manuals
+            disableBlockingMode(); clearMagicSelection();
+            const targetHours = parseInt(document.getElementById('teacherHours').value) || 27; let currentAssigned = 0; const isMainSubject = (subj) => magicSubjectKeys.includes(subj); let teacherGrid = Array(5).fill().map(() => Array(10).fill(false)); let potentialSlotsCount = 0; let blockedMissesCount = 0;
             for (const key in timetableData) {
                  const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
                 timetableData[key].forEach(entry => {
-                    // Update: Global subjects also block the grid for teacher, but don't count for class balance
-                    if (entry.isManual) { 
-                        if (!teacherGrid[day][period]) { teacherGrid[day][period] = true; currentAssigned++; }
-                    }
+                    if (entry.isManual) { if (!teacherGrid[day][period]) { teacherGrid[day][period] = true; currentAssigned++; } }
                     const isRuleSubject = magicRules.some(r => r.className === entry.className && r.subject === entry.subject);
-                    
-                    // FIXED: Removed automatic inclusion of GLOBAL_SUBJECTS. Must be in magicSubjectKeys.
-                    if (isMainSubject(entry.subject) || isRuleSubject) { 
-                        potentialSlotsCount++; 
-                        if (blockedSlots.has(key)) blockedMissesCount++; 
-                    }
+                    if (isMainSubject(entry.subject) || isRuleSubject) { potentialSlotsCount++; if (blockedSlots.has(key)) blockedMissesCount++; }
                 });
             }
-
-            // Phase 1: Rules
             magicRules.forEach(rule => {
                 let ruleAlreadyMet = 0; for (const key in timetableData) { timetableData[key].forEach(entry => { if (entry.isManual && entry.className === rule.className && entry.subject === rule.subject) ruleAlreadyMet++; }); }
                 let needed = rule.hours - ruleAlreadyMet; if (needed <= 0) return;
-
-                let ruleAssigned = 0;
-                let ruleCandidates = [];
+                let ruleAssigned = 0; let ruleCandidates = [];
                 for (const key in timetableData) {
-                    if (blockedSlots.has(key)) continue;
-                    const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                    if (blockedSlots.has(key)) continue; const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
                     if (teacherGrid[day][period]) continue;
-                    timetableData[key].forEach((entry, index) => {
-                        if (entry.className === rule.className && entry.subject === rule.subject && !entry.isManual && !entry.isMagicSelected) { ruleCandidates.push({ key, day, period, entryIndex: index }); }
-                    });
+                    timetableData[key].forEach((entry, index) => { if (entry.className === rule.className && entry.subject === rule.subject && !entry.isManual && !entry.isMagicSelected) { ruleCandidates.push({ key, day, period, entryIndex: index }); } });
                 }
                 ruleCandidates.sort((a,b) => (teacherGrid[a.day][a.period-1] ? -1 : 1)); 
-                for(let k=0; k<needed; k++) {
-                    if(k < ruleCandidates.length && currentAssigned < targetHours) {
-                        const cand = ruleCandidates[k];
-                        timetableData[cand.key][cand.entryIndex].isMagicSelected = true; teacherGrid[cand.day][cand.period] = true; currentAssigned++;
-                    }
-                }
+                for(let k=0; k<needed; k++) { if(k < ruleCandidates.length && currentAssigned < targetHours) { const cand = ruleCandidates[k]; timetableData[cand.key][cand.entryIndex].isMagicSelected = true; teacherGrid[cand.day][cand.period] = true; currentAssigned++; } }
             });
-
-            // Phase 2: Fill Up (MODIFIED FOR GLOBAL SUBJECTS)
             let classCounts = {}; classes.forEach(c => { classCounts[c.name] = 0; });
             for (const key in timetableData) { timetableData[key].forEach(entry => { if ((entry.isMagicSelected || entry.isManual) && classCounts[entry.className] !== undefined && !GLOBAL_SUBJECTS.includes(entry.subject)) { classCounts[entry.className]++; } }); }
-
             while (currentAssigned < targetHours) {
-                let bestMove = null; let bestScore = -999999;
-                
-                let currentMin = 999;
-                let activeClasses = new Set();
-                
+                let bestMove = null; let bestScore = -999999; let currentMin = 999; let activeClasses = new Set();
                 for (const key in timetableData) {
-                    if (blockedSlots.has(key)) continue;
-                    const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                    if (blockedSlots.has(key)) continue; const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
                     if (teacherGrid[day][period]) continue;
-                    timetableData[key].forEach(e => {
-                        // FIXED: STRICT CHECK - Only user selected magic keys allowed
-                        if (isMainSubject(e.subject) && !e.isManual && !e.isMagicSelected) {
-                            if(!GLOBAL_SUBJECTS.includes(e.subject)) activeClasses.add(e.className);
-                        }
-                    });
+                    timetableData[key].forEach(e => { if (isMainSubject(e.subject) && !e.isManual && !e.isMagicSelected) { if(!GLOBAL_SUBJECTS.includes(e.subject)) activeClasses.add(e.className); } });
                 }
-                
-                if (activeClasses.size > 0) {
-                    activeClasses.forEach(clsName => { const h = classCounts[clsName] || 0; if (h < currentMin) currentMin = h; });
-                }
-
+                if (activeClasses.size > 0) { activeClasses.forEach(clsName => { const h = classCounts[clsName] || 0; if (h < currentMin) currentMin = h; }); }
                 for (const key in timetableData) {
-                    if (blockedSlots.has(key)) continue;
-                    const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                    if (blockedSlots.has(key)) continue; const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
                     if (teacherGrid[day][period]) continue;
-
                     timetableData[key].forEach((entry, index) => {
-                        // FIXED: STRICT CHECK - Only user selected magic keys allowed
                         if (isMainSubject(entry.subject) && !entry.isManual && !entry.isMagicSelected) {
                             let score = 0;
-                            
-                            // Special scoring for GLOBAL: They don't affect class balance directly, but help fill teacher schedule
-                            if(GLOBAL_SUBJECTS.includes(entry.subject)) {
-                                score += 5000; 
-                            } else {
-                                const currentHours = classCounts[entry.className] || 0;
-                                if (currentHours === currentMin) score += 10000;
-                                else if (currentHours === currentMin + 1) score += 1000;
-                                else score -= 1000;
-                            }
-
+                            if(GLOBAL_SUBJECTS.includes(entry.subject)) { score += 5000; } else { const currentHours = classCounts[entry.className] || 0; if (currentHours === currentMin) score += 10000; else if (currentHours === currentMin + 1) score += 1000; else score -= 1000; }
                             const prevBusy = teacherGrid[day][period - 1]; const nextBusy = teacherGrid[day][period + 1]; if (prevBusy) score += 50; if (nextBusy) score += 50;
-                            score += Math.random() * 10;
-                            if (score > bestScore) { bestScore = score; bestMove = { key, day, period, index, className: entry.className, subject: entry.subject }; }
+                            score += Math.random() * 10; if (score > bestScore) { bestScore = score; bestMove = { key, day, period, index, className: entry.className, subject: entry.subject }; }
                         }
                     });
                 }
-
                 if (!bestMove) break;
-                timetableData[bestMove.key][bestMove.index].isMagicSelected = true;
-                teacherGrid[bestMove.day][bestMove.period] = true;
-                
-                if(!GLOBAL_SUBJECTS.includes(bestMove.subject)) {
-                    classCounts[bestMove.className]++;
-                }
-                currentAssigned++;
+                timetableData[bestMove.key][bestMove.index].isMagicSelected = true; teacherGrid[bestMove.day][bestMove.period] = true;
+                if(!GLOBAL_SUBJECTS.includes(bestMove.subject)) { classCounts[bestMove.className]++; } currentAssigned++;
             }
-
-            // --- PHASE 3: AGGRESSIVE REBALANCING (ROBIN HOOD) ---
             let iterations = 0;
             while(iterations < 500) { 
-                let changesInLoop = false;
-                
-                // Recalculate stats for current state (excluding globals)
-                let currentCounts = {};
-                classes.forEach(c => currentCounts[c.name] = 0);
-                for (const key in timetableData) {
-                    timetableData[key].forEach(e => {
-                        if ((e.isMagicSelected || e.isManual) && !GLOBAL_SUBJECTS.includes(e.subject)) currentCounts[e.className]++;
-                    });
-                }
-
-                // Identify Max and Min class
-                let minH = 999, maxH = -1;
-                let minClass = null, maxClass = null;
-
-                classes.forEach(c => {
-                    let h = currentCounts[c.name] || 0;
-                    if(h < minH) { minH = h; minClass = c.name; }
-                    if(h > maxH) { maxH = h; maxClass = c.name; }
-                });
-
+                let changesInLoop = false; let currentCounts = {}; classes.forEach(c => currentCounts[c.name] = 0);
+                for (const key in timetableData) { timetableData[key].forEach(e => { if ((e.isMagicSelected || e.isManual) && !GLOBAL_SUBJECTS.includes(e.subject)) currentCounts[e.className]++; }); }
+                let minH = 999, maxH = -1; let minClass = null, maxClass = null;
+                classes.forEach(c => { let h = currentCounts[c.name] || 0; if(h < minH) { minH = h; minClass = c.name; } if(h > maxH) { maxH = h; maxClass = c.name; } });
                 if ((maxH - minH) < 2) break; 
-
-                // Attempt to steal for ANY minClass from ANY maxClass
-                // Shuffle to avoid sticky loops
                 for(const key in timetableData) {
-                    if (changesInLoop) break;
-                    
-                    const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
-                    
-                    // 1. Check if occupied by a rich class (AUTO only, NOT global)
-                    let richIndex = -1;
-                    let richClassName = null;
-                    
-                    timetableData[key].forEach((e, idx) => {
-                        // FIXED: Added isMainSubject check just to be safe, though magicSelected implies it usually
-                        if(e.isMagicSelected && !e.isManual && !GLOBAL_SUBJECTS.includes(e.subject) && isMainSubject(e.subject)) {
-                             if (currentCounts[e.className] > minH + 1) { 
-                                 richIndex = idx;
-                                 richClassName = e.className;
-                             }
-                        }
-                    });
-
+                    if (changesInLoop) break; const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                    let richIndex = -1; let richClassName = null;
+                    timetableData[key].forEach((e, idx) => { if(e.isMagicSelected && !e.isManual && !GLOBAL_SUBJECTS.includes(e.subject) && isMainSubject(e.subject)) { if (currentCounts[e.className] > minH + 1) { richIndex = idx; richClassName = e.className; } } });
                     if(richIndex !== -1) {
-                        // 2. Check if ANY poor class (at minH) can take this slot
-                        let poorIndex = -1;
-                        let poorClassName = null;
-
-                        timetableData[key].forEach((e, idx) => {
-                            if(currentCounts[e.className] === minH && isMainSubject(e.subject) && !e.isMagicSelected && !e.isManual) {
-                                poorIndex = idx;
-                                poorClassName = e.className;
-                            }
-                        });
-
-                        if(poorIndex !== -1) {
-                            // 3. EXECUTE THEFT
-                            timetableData[key][richIndex].isMagicSelected = false;
-                            timetableData[key][poorIndex].isMagicSelected = true;
-                            
-                            changesInLoop = true;
-                        }
+                        let poorIndex = -1; let poorClassName = null;
+                        timetableData[key].forEach((e, idx) => { if(currentCounts[e.className] === minH && isMainSubject(e.subject) && !e.isMagicSelected && !e.isManual) { poorIndex = idx; poorClassName = e.className; } });
+                        if(poorIndex !== -1) { timetableData[key][richIndex].isMagicSelected = false; timetableData[key][poorIndex].isMagicSelected = true; changesInLoop = true; }
                     }
                 }
-                
-                if (!changesInLoop) break; 
-                iterations++;
+                if (!changesInLoop) break; iterations++;
             }
-
             let warning = ""; 
             if (currentAssigned < targetHours) { 
                 const missing = targetHours - currentAssigned; 
                 warning = `<div class="bg-orange-50 border-l-4 border-orange-400 text-orange-800 p-2 mb-3 text-xs"><p class="font-bold mb-2"><i class="fas fa-info-circle mr-1"></i> Fast geschafft! Es fehlen noch ${missing} Stunden.</p>`;
-                if (potentialSlotsCount < targetHours) warning += `<p class="mb-1">Im aktuellen Plan gibt es leider nicht genügend Stunden für deine gewählten Fächer (nur ${potentialSlotsCount} verfügbar).</p><p><strong>Tipp:</strong> Schaue doch mal im Zahnrad-Menü <i class="fas fa-cog inline"></i> vorbei und wähle weitere Fächer aus.</p>`;
-                else if (blockedMissesCount > 0) warning += `<p class="mb-1">Einige passende Stunden fallen leider genau in deine Sperrzeiten (⛔).</p><p><strong>Tipp:</strong> Vielleicht kannst du ein paar Sperren aufheben?</p>`;
-                else warning += `<p class="mb-1">Es gibt zwar Stunden, aber die finden oft gleichzeitig statt.</p><p><strong>Tipp:</strong> Eine flexiblere Fächerauswahl hilft oft gegen Zeitkonflikte.</p>`;
+                if (potentialSlotsCount < targetHours) warning += `<p class="mb-1">Im aktuellen Plan gibt es leider nicht genügend Stunden für deine gewählten Fächer (nur ${potentialSlotsCount} verfügbar).</p>`;
+                else if (blockedMissesCount > 0) warning += `<p class="mb-1">Einige passende Stunden fallen leider genau in deine Sperrzeiten (⛔).</p>`;
+                else warning += `<p class="mb-1">Es gibt zwar Stunden, aber die finden oft gleichzeitig statt.</p>`;
                 warning += `</div>`;
             }
             renderTimetable(); updateLiveStats(); showResult(null, null, currentAssigned, targetHours, warning);
-            // NEW: Automatically open stats panel after run
-            toggleStatsPanel(true);
         }
 
-        // --- 6. RENDER FUNCTIONS ---
         function renderClasses() {
             const container = document.getElementById('classList'); container.innerHTML = ''; 
-            if (classes.length === 0) { container.innerHTML = '<span class="text-gray-400 text-sm italic self-center" id="noClassHint">Noch keine Klasse erstellt...</span>'; return; }
+            if (classes.length === 0) { container.innerHTML = '<span class="text-gray-400 text-sm italic self-center pl-2" id="noClassHint">Keine Klassen...</span>'; return; }
             classes.forEach((c, idx) => {
                 const btn = document.createElement('div'); const isSelected = selectedClassIndex === idx;
                 let styleClass = `cursor-pointer flex items-center px-3 py-1 rounded border shadow-sm transition select-none ${c.colorClass} `;
@@ -1647,97 +1241,56 @@
         
         function renderSubjects() {
             const grid = document.getElementById('subjectGrid'); grid.innerHTML = '';
-            
-            // Use allSubjects here, but filter hidden ones
             allSubjects.forEach(sub => {
                 if(!isSubjectVisible(sub) && sub !== '---') return; 
-
                 const btn = document.createElement('button');
                 let fontSize = "text-sm"; if (sub.length > 5) fontSize = "text-xs"; if (sub.length > 10) fontSize = "text-[10px]";
                 btn.className = `subject-btn bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-1 rounded ${fontSize} shadow-sm truncate flex items-center justify-center`;
-                
-                if (sub === '---') { 
-                    btn.innerHTML = '<i class="fas fa-slash text-gray-400 rotate-90" style="font-size: 1.2em;"></i>'; 
-                    btn.classList.add('border-gray-300', 'bg-gray-50'); 
-                } else { 
-                    btn.textContent = sub; 
-                    // COLOR LOGIC: Apply the border color from our map
-                    const color = subjectColors[sub];
-                    if(color) {
-                        // Apply custom border color via style for precision (Tailwind safe)
-                        btn.style.borderLeftWidth = '4px';
-                        btn.style.borderLeftColor = color;
-                    }
-                }
-                
-                // Add click handler
-                btn.onclick = () => insertSubject(sub); 
-                
-                // Add Context Menu Handler (Right Click)
-                btn.oncontextmenu = (e) => hideSubject(e, sub);
-
-                grid.appendChild(btn);
+                if (sub === '---') { btn.innerHTML = '<i class="fas fa-slash text-gray-400 rotate-90" style="font-size: 1.2em;"></i>'; btn.classList.add('border-gray-300', 'bg-gray-50'); } else { btn.textContent = sub; const color = subjectColors[sub]; if(color) { btn.style.borderLeftWidth = '4px'; btn.style.borderLeftColor = color; } }
+                btn.onclick = () => insertSubject(sub); btn.oncontextmenu = (e) => hideSubject(e, sub); grid.appendChild(btn);
             });
         }
 
         function renderCellContent(cellElement, entries) {
             cellElement.innerHTML = '';
-            // Added class 'cell-wrapper' for print targeting
-            const container = document.createElement('div'); container.className = `cell-wrapper grid ${entries.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-0.5 h-full w-full relative z-10`; 
-            
-            if (blockedSlots.has(cellElement.id)) { 
-                const overlay = document.createElement('div'); overlay.className = 'blocked-overlay'; cellElement.appendChild(overlay); 
-                cellElement.classList.add('blocked-cell'); 
-            } else { cellElement.classList.remove('blocked-cell'); }
-
+            const container = document.createElement('div'); container.className = `cell-wrapper flex flex-col gap-0.5 h-full w-full relative z-10`; 
+            if (blockedSlots.has(cellElement.id)) { const overlay = document.createElement('div'); overlay.className = 'blocked-overlay'; cellElement.appendChild(overlay); cellElement.classList.add('blocked-cell'); } else { cellElement.classList.remove('blocked-cell'); }
             if (!entries || entries.length === 0) return;
             const anySelected = entries.some(e => e.isMagicSelected || e.isManual);
-            
-            // Check for Global Subject Selection in this cell
             const globalSelected = entries.find(e => (e.isMagicSelected || e.isManual) && GLOBAL_SUBJECTS.includes(e.subject));
-
             if (globalSelected) {
-                 // Render BIG global chip
                  const allClassesString = classes.map(c => c.name).join(', ');
                  const chip = document.createElement('div');
-                 
-                 // Determine Specific Style Class
                  let styleClass = 'global-chip';
                  if (globalSelected.subject === 'FÖA') styleClass += ' special-foea';
                  else if (['WPF', 'SPA', 'TUE'].includes(globalSelected.subject)) styleClass += ' special-wpf';
+                 else if (globalSelected.subject === 'ZUP') styleClass += ' special-zup';
+                 
+                 // Show "Teamsitzung" for ZUP, else list classes
+                 let subText = allClassesString;
+                 if (globalSelected.subject === 'ZUP') subText = 'Teamsitzung';
                  
                  chip.className = `entry-chip ${styleClass}`;
-                 
-                 // Force Manual look if manual
-                 if(globalSelected.isManual) {
-                     chip.innerHTML = `<div class="magic-icon manual"><i class="fas fa-thumbtack"></i></div><span class="chip-subject">${globalSelected.subject}</span><span class="chip-class">${allClassesString}</span>`;
-                 } else {
-                     chip.innerHTML = `<div class="magic-icon auto"><i class="fas fa-graduation-cap"></i></div><span class="chip-subject">${globalSelected.subject}</span><span class="chip-class">${allClassesString}</span>`;
-                 }
-                 
-                 // Clicking global chip toggles it for the specific class it was assigned to (under hood)
-                 // We find the entry index
+                 chip.style.flex = "1";
+                 if(globalSelected.isManual) { chip.innerHTML = `<div class="magic-icon manual"><i class="fas fa-thumbtack"></i></div><span class="chip-subject">${globalSelected.subject}</span><span class="chip-class">${subText}</span>`; } else { chip.innerHTML = `<div class="magic-icon auto"><i class="fas fa-graduation-cap"></i></div><span class="chip-subject">${globalSelected.subject}</span><span class="chip-class">${subText}</span>`; }
                  const idx = entries.indexOf(globalSelected);
-                 chip.onclick = (e) => { 
-                    if (isBlockingMode) return; 
-                    e.stopPropagation(); 
-                    toggleEntrySelection(cellElement.id, idx); 
-                };
-                
+                 chip.onclick = (e) => { if (isBlockingMode) return; e.stopPropagation(); setCursor(parseInt(cellElement.id.split('-')[0].substring(1)), parseInt(cellElement.id.split('-')[1].substring(1))); };
                  container.appendChild(chip);
             } else {
-                // Normal Rendering
                 entries.forEach((entry, idx) => {
-                    const chip = document.createElement('div'); let spanClass = ''; if (entries.length === 3 && idx === 2) spanClass = 'col-span-2'; if (entries.length === 5 && idx === 4) spanClass = 'col-span-2'; if (entries.length === 7 && idx === 6) spanClass = 'col-span-2';
-                    let magicClass = ''; let magicIcon = ''; if (entry.isManual) { magicClass = 'manual-selected'; magicIcon = `<div class="magic-icon manual"><i class="fas fa-thumbtack"></i></div>`; } else if (entry.isMagicSelected) { magicClass = 'magic-selected'; magicIcon = `<div class="magic-icon auto"><i class="fas fa-graduation-cap"></i></div>`; } else if (anySelected) { magicClass = 'dimmed'; }
-                    chip.className = `entry-chip ${entry.colorClass} ${spanClass} ${magicClass}`;
-                    chip.onclick = (e) => { 
-                        if (isBlockingMode) return; 
-                        e.stopPropagation(); 
-                        toggleEntrySelection(cellElement.id, idx); 
-                    };
-                    let subjSize = entries.length === 1 ? 'text-base lg:text-lg' : 'text-[10px]'; if (entry.subject.length > 5) subjSize = entries.length === 1 ? 'text-xs' : 'text-[8px]'; const classSize = entries.length === 1 ? 'text-xs' : 'text-[8px] leading-tight'; let displaySubject = `<span class="${subjSize} font-bold uppercase truncate w-full text-center tracking-tight">${entry.subject}</span>`; if (entry.subject === '---') displaySubject = `<i class="fas fa-slash text-lg opacity-50 rotate-90"></i>`;
-                    chip.innerHTML = `${magicIcon}${displaySubject}<span class="${classSize} opacity-75 truncate w-full text-center font-medium">${entry.className}</span>`; container.appendChild(chip);
+                    const chip = document.createElement('div'); 
+                    let magicClass = ''; let magicIcon = ''; 
+                    if (entry.isMagicSelected && !entry.isManual) { magicClass = 'magic-selected'; magicIcon = `<div class="magic-icon auto"><i class="fas fa-graduation-cap"></i></div>`; } else if (entry.isManual) { magicClass = 'manual-selected'; } else if (anySelected) { magicClass = 'dimmed'; }
+                    chip.className = `entry-chip ${entry.colorClass} ${magicClass}`;
+                    chip.style.flex = "1"; 
+                    let subjSize = 'text-[10px]'; if (entries.length === 1) subjSize = 'text-sm lg:text-base'; else if (entries.length > 4) subjSize = 'text-[9px]';
+                    const deleteBtn = document.createElement('div'); deleteBtn.className = 'chip-btn delete'; deleteBtn.innerHTML = '<i class="fas fa-times"></i>'; deleteBtn.onclick = (e) => { e.stopPropagation(); removeEntry(cellElement.id, idx); };
+                    const pinBtn = document.createElement('div'); pinBtn.className = `chip-btn pin ${entry.isManual ? 'active' : ''}`; pinBtn.innerHTML = '<i class="fas fa-thumbtack"></i>'; pinBtn.onclick = (e) => { e.stopPropagation(); toggleEntryManual(cellElement.id, idx); };
+                    let displaySubject = `<span class="${subjSize} font-bold uppercase truncate w-full text-center tracking-tight">${entry.subject}</span>`; if (entry.subject === '---') displaySubject = `<i class="fas fa-slash text-lg opacity-50 rotate-90"></i>`;
+                    chip.innerHTML = `${magicIcon}${displaySubject}<span class="text-[8px] leading-tight opacity-75 truncate w-full text-center font-medium">${entry.className}</span>`; 
+                    chip.appendChild(deleteBtn); chip.appendChild(pinBtn);
+                    chip.onclick = (e) => { if (isBlockingMode) return; e.stopPropagation(); const d = parseInt(cellElement.id.split('-')[0].substring(1)); const p = parseInt(cellElement.id.split('-')[1].substring(1)); setCursor(d, p); };
+                    container.appendChild(chip);
                 });
             }
             cellElement.appendChild(container);
@@ -1746,19 +1299,14 @@
         function renderTimetable() {
             const body = document.getElementById('timetableBody'); body.innerHTML = '';
             scheduleStructure.forEach(slot => {
-                // Add specific class names for print targeting
                 if (slot.type === 'break') {
-                    const row = document.createElement('div'); 
-                    row.className = "print-break grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] bg-gray-200 text-gray-500 border-b border-gray-300"; 
-                    row.innerHTML = `<div class="py-0.5 text-center text-[10px] flex flex-col justify-center font-mono border-r border-gray-300 bg-gray-300">${slot.start}<br>${slot.end}</div><div class="col-span-5 py-0.5 text-center font-bold tracking-widest text-[10px] uppercase flex items-center justify-center italic">${slot.label}</div>`; body.appendChild(row);
+                    const row = document.createElement('div'); row.className = "print-break grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] bg-gray-200 text-gray-500 border-b border-gray-300"; row.innerHTML = `<div class="py-0.5 text-center text-[10px] flex flex-col justify-center font-mono border-r border-gray-300 bg-gray-300">${slot.start}<br>${slot.end}</div><div class="col-span-5 py-0.5 text-center font-bold tracking-widest text-[10px] uppercase flex items-center justify-center italic">${slot.label}</div>`; body.appendChild(row);
                 } else {
-                    const row = document.createElement('div'); 
-                    row.className = "print-lesson grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] border-b border-gray-300 min-h-[80px]"; 
+                    const row = document.createElement('div'); row.className = "print-lesson grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] border-b border-gray-300 min-h-[80px]"; 
                     const timeCell = document.createElement('div'); timeCell.className = "p-1 text-center text-xs flex flex-col justify-center font-mono border-r border-gray-300 bg-gray-50 font-medium"; timeCell.innerHTML = `<span class="text-base font-bold text-gray-700">${slot.id}.</span><span class="text-gray-500 text-[10px] mt-1">${slot.start}<br>${slot.end}</span>`; row.appendChild(timeCell);
                     for (let day = 0; day < 5; day++) {
                         const cellId = `d${day}-p${slot.id}`; const cell = document.createElement('div'); cell.id = cellId; 
-                        if (blockedSlots.has(cellId)) cell.className = `p-0.5 border-r border-gray-200 relative hover:bg-gray-50 cursor-pointer transition group blocked-cell`;
-                        else cell.className = `p-0.5 border-r border-gray-200 relative hover:bg-gray-50 cursor-pointer transition group`;
+                        if (blockedSlots.has(cellId)) cell.className = `p-0.5 border-r border-gray-200 relative hover:bg-gray-50 cursor-pointer transition group blocked-cell`; else cell.className = `p-0.5 border-r border-gray-200 relative hover:bg-gray-50 cursor-pointer transition group`;
                         cell.onclick = () => handleCellClick(day, slot.id); const entries = timetableData[cellId] || []; renderCellContent(cell, entries); row.appendChild(cell);
                     }
                     body.appendChild(row);
@@ -1766,31 +1314,27 @@
             });
         }
 
-        // --- 7. INTERACTIONS ---
         function handleClassEnter(e) { if (e.key === 'Enter') addClass(); }
         function addClass() {
             disableBlockingMode();
             const input = document.getElementById('classInput'); const val = input.value.trim();
             if (val && !classes.some(c => c.name === val)) {
-                // FIXED: Use helper to get consistent color
-                const colorClass = getColorForClass(val); 
-                classes.push({ name: val, colorClass: colorClass });
-                // UPDATED: Use MEN instead of MIT in demo fill for new classes
+                const colorClass = getColorForClass(val); classes.push({ name: val, colorClass: colorClass });
                 if (val.startsWith('5') || val.startsWith('6')) { for (let d = 0; d < 5; d++) { const cellId = `d${d}-p5`; let entries = timetableData[cellId] || []; entries.push({ subject: "MEN", className: val, colorClass: colorClass, isMagicSelected: false, isManual: false }); timetableData[cellId] = entries; } renderTimetable(); } selectClass(classes.length - 1);
             } input.value = ''; input.focus(); renderClasses();
         }
-        function removeClass(index) { classes.splice(index, 1); if (selectedClassIndex >= index) selectedClassIndex = Math.max(0, selectedClassIndex - 1); if (classes.length === 0) selectedClassIndex = -1; renderClasses(); updateSelectedClassDisplay(); renderSubjects(); updateLiveStats(); }
-        function selectClass(index) { disableBlockingMode(); selectedClassIndex = index; renderClasses(); updateSelectedClassDisplay(); renderSubjects(); }
+        function removeClass(index) { classes.splice(index, 1); if (selectedClassIndex >= index) selectedClassIndex = Math.max(0, selectedClassIndex - 1); if (classes.length === 0) { selectedClassIndex = -1; updateHeaderColor('neutral'); } renderClasses(); updateSelectedClassDisplay(); renderSubjects(); updateLiveStats(); }
+        function selectClass(index) { disableBlockingMode(); selectedClassIndex = index; updateHeaderColor('class', index); renderClasses(); updateSelectedClassDisplay(); renderSubjects(); }
+        
+        function updateHeaderColor(mode, classIndex) {
+            const header = document.getElementById('timetableHeader');
+            header.className = "grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] text-center font-bold text-sm shadow-md z-10 flex-shrink-0 transition-colors duration-300";
+            if (mode === 'class' && classes[classIndex]) { header.className += " " + classes[classIndex].colorClass; } else { header.className += " bg-slate-800 text-white"; }
+        }
+
         function handleCellClick(day, period) {
             const cellId = `d${day}-p${period}`; 
-            if (isBlockingMode) { 
-                if (blockedSlots.has(cellId)) blockedSlots.delete(cellId); 
-                else { 
-                    blockedSlots.add(cellId); 
-                    if (timetableData[cellId]) timetableData[cellId].forEach(e => { e.isMagicSelected = false; e.isManual = false; }); 
-                } 
-                renderTimetable(); updateLiveStats(); return; 
-            } 
+            if (isBlockingMode) { if (blockedSlots.has(cellId)) blockedSlots.delete(cellId); else { blockedSlots.add(cellId); if (timetableData[cellId]) timetableData[cellId].forEach(e => { e.isMagicSelected = false; e.isManual = false; }); } renderTimetable(); updateLiveStats(); return; } 
             setCursor(day, period);
         }
         function setCursor(day, period) {
@@ -1798,29 +1342,73 @@
             const oldId = `d${cursor.day}-p${cursor.period}`; const oldCell = document.getElementById(oldId); if (oldCell) oldCell.classList.remove('active-cell'); cursor = { day, period }; const newId = `d${day}-p${period}`; const newCell = document.getElementById(newId); if (newCell) { newCell.classList.add('active-cell'); newCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } updateCursorVisuals();
         }
         function updateCursorVisuals() { const newId = `d${cursor.day}-p${cursor.period}`; const newCell = document.getElementById(newId); if (newCell) { newCell.classList.add('active-cell'); newCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } }
-        function insertSubject(subject) {
-            if (isBlockingMode) { disableBlockingMode(); return; } 
-            
-            if (selectedClassIndex === -1 && classes.length > 0) { showToast("Bitte erst Klasse wählen!", true); return; } const currentClass = selectedClassIndex > -1 ? classes[selectedClassIndex] : { name: '', colorClass: 'bg-gray-200 text-gray-800' }; const cellId = `d${cursor.day}-p${cursor.period}`; let entries = timetableData[cellId] || []; if (entries.length >= 8) { showToast("Max. 8 Fächer erreicht!", true); return; } entries.push({ subject: subject, className: currentClass.name, colorClass: currentClass.colorClass, isMagicSelected: false, isManual: false }); timetableData[cellId] = entries; renderCellContent(document.getElementById(cellId), entries); advanceCursor();
-        }
-        function advanceCursor() { let nextPeriod = cursor.period + 1; let nextDay = cursor.day; if (nextPeriod > 8) { nextPeriod = 1; nextDay++; if (nextDay > 4) nextDay = 0; } setCursor(nextDay, nextPeriod); }
-        function clearActiveCell() { const cellId = `d${cursor.day}-p${cursor.period}`; delete timetableData[cellId]; document.getElementById(cellId).innerHTML = ''; }
-        function toggleEntrySelection(cellId, entryIndex) {
-            if (timetableData[cellId] && timetableData[cellId][entryIndex]) {
-                const entries = timetableData[cellId]; const clickedEntry = entries[entryIndex];
-                if (clickedEntry.isManual) { clickedEntry.isManual = false; clickedEntry.isMagicSelected = false; updateRulesFromPin(clickedEntry.className, clickedEntry.subject); } 
-                else { 
-                    const previousManualEntry = entries.find(e => e.isManual); entries.forEach(e => { e.isMagicSelected = false; e.isManual = false; clickedEntry.isManual = true; 
-                    if (blockedSlots.has(cellId)) { blockedSlots.delete(cellId); }
-                    if (previousManualEntry && previousManualEntry !== clickedEntry) updateRulesFromPin(previousManualEntry.className, previousManualEntry.subject); 
-                    updateRulesFromPin(clickedEntry.className, clickedEntry.subject); 
-                });
+        
+        function removeEntry(cellId, index) { if (timetableData[cellId] && timetableData[cellId][index]) { const entry = timetableData[cellId][index]; updateRulesFromPin(entry.className, entry.subject); timetableData[cellId].splice(index, 1); if (timetableData[cellId].length === 0) delete timetableData[cellId]; renderTimetable(); updateLiveStats(); } }
+        function toggleEntryManual(cellId, index) { 
+            if (timetableData[cellId] && timetableData[cellId][index]) { 
+                const entries = timetableData[cellId];
+                const entry = entries[index]; 
+                
+                // Toggle state
+                const wasManual = entry.isManual;
+                entry.isManual = !wasManual; 
+                entry.isMagicSelected = false; 
+                
+                // Update rule for this entry
+                updateRulesFromPin(entry.className, entry.subject);
+                
+                // If we just pinned it, unpin others to ensure only one manual per cell
+                if (!wasManual) {
+                    entries.forEach((e, i) => {
+                        if (i !== index && e.isManual) {
+                            e.isManual = false;
+                            updateRulesFromPin(e.className, e.subject);
+                        }
+                    });
+                    showToast("Anderes Fach gelöst (nur 1 Pin/Feld)");
                 }
-                const cell = document.getElementById(cellId); renderCellContent(cell, entries); updateLiveStats();
-            }
+                
+                renderTimetable(); 
+                updateLiveStats(); 
+            } 
         }
 
-        // --- TEST DATA GENERATOR ---
+        function insertSubject(subject) {
+            if (isBlockingMode) { disableBlockingMode(); return; } 
+            if (selectedClassIndex === -1 && classes.length > 0) { showToast("Bitte erst Klasse wählen!", true); return; } 
+            const currentClass = selectedClassIndex > -1 ? classes[selectedClassIndex] : { name: '', colorClass: 'bg-gray-200 text-gray-800' }; 
+            const cellId = `d${cursor.day}-p${cursor.period}`; let entries = timetableData[cellId] || []; 
+            const existingIndex = entries.findIndex(e => e.className === currentClass.name);
+            if (existingIndex > -1) {
+                const oldSubject = entries[existingIndex].subject; entries[existingIndex].subject = subject;
+                if(entries[existingIndex].isManual) { updateRulesFromPin(currentClass.name, oldSubject); updateRulesFromPin(currentClass.name, subject); }
+            } else {
+                if (entries.length >= 8) { showToast("Max. 8 Fächer erreicht!", true); return; } 
+                entries.push({ subject: subject, className: currentClass.name, colorClass: currentClass.colorClass, isMagicSelected: false, isManual: false }); 
+            }
+            timetableData[cellId] = entries; renderCellContent(document.getElementById(cellId), entries); 
+            if (existingIndex === -1 && entries.length === 1) { advanceCursor(); }
+        }
+        function advanceCursor() { 
+            let nextPeriod = cursor.period + 1; 
+            let nextDay = cursor.day; 
+            
+            if (nextPeriod > 8) { 
+                nextPeriod = 1; 
+                nextDay++; 
+                if (nextDay > 4) nextDay = 0; 
+            } 
+            
+            // Skip ZUP (Wednesday=2, Period=5)
+            if (nextDay === 2 && nextPeriod === 5) {
+                nextPeriod++; // Skip to period 6
+                // Boundary check if period 5 was last (not applicable here as max is 8)
+            }
+            
+            setCursor(nextDay, nextPeriod); 
+        }
+        function clearActiveCell() { const cellId = `d${cursor.day}-p${cursor.period}`; delete timetableData[cellId]; document.getElementById(cellId).innerHTML = ''; }
+        
         function fillTestSchedule() {
             disableBlockingMode();
             if (classes.length === 0) { const demoClasses = ['6a', '6b', '6c', '6d', '6e']; demoClasses.forEach((name, idx) => { classes.push({ name: name, colorClass: classColors[idx % classColors.length] }); }); renderClasses(); selectClass(0); }
@@ -1835,7 +1423,6 @@
                 const wpfIds = parallelPool.slice(0, 4); const foeaIds = parallelPool.slice(4, 6); const allParallelIds = [...wpfIds, ...foeaIds];
                 let entriesCount = 0;
                 classes.forEach(cls => {
-                    // UPDATED: Used MEN instead of MIT
                     mitIds.forEach(id => addEntry(id, "MEN", cls)); ksIds.forEach(id => addEntry(id, "KS", cls)); solFixedIds.forEach(id => addEntry(id, "SOL", cls));
                     wpfIds.forEach(id => addEntry(id, "WPF", cls)); foeaIds.forEach(id => addEntry(id, "FÖA", cls));
                     let bucket = []; for(let i=0; i<4; i++) bucket.push("MAT"); for(let i=0; i<4; i++) bucket.push("DEU"); for(let i=0; i<4; i++) bucket.push("ENG"); for(let i=0; i<3; i++) bucket.push("NAT"); for(let i=0; i<2; i++) bucket.push("GGP"); for(let i=0; i<2; i++) bucket.push("SPO"); bucket.push("RAT"); bucket.push("CARE"); bucket.push("IPAD"); bucket.push("SOL");
@@ -1844,19 +1431,19 @@
                     bucket.forEach((subj, idx) => { if (idx < mySlots.length) addEntry(mySlots[idx], subj, cls); });
                     entriesCount += bucket.length + 9 + 6;
                 });
+                ensureZUP(); // Restore ZUP
                 renderTimetable(); updateLiveStats(); showToast(`Fertig! ${entriesCount} Einträge.`);
             } catch (e) { showToast("Fehler: " + e.message, true); }
         }
         
-        // --- Initialization ---
         function init() {
             renderSubjects();
             renderTimetable();
             updateCursorVisuals();
             renderClasses();
             document.getElementById('classInput').focus();
+            ensureZUP(); // Ensure ZUP on init
             updateLiveStats(); 
-            // FIXED: Removed double toggle to ensure correct init state
             
             // CHECK TOUR STATUS
             if (!localStorage.getItem('stundenplan_tour_seen')) {
