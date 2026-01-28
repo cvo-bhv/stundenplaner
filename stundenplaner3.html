@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SopädStundenplaner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; touch-action: none; /* Prevent default browser zooming/panning globally to handle it manually */ }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .active-cell {
+            border: 3px solid #3b82f6 !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+            transform: scale(1.02);
+            z-index: 50;
+        }
+
+        /* Blocked Cell */
+        .blocked-cell {
+            background-image: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.05), rgba(239, 68, 68, 0.05) 10px, rgba(239, 68, 68, 0.15) 10px, rgba(239, 68, 68, 0.15) 20px);
+            position: relative;
+        }
+        .blocked-cell::after {
+            content: '\f023'; font-family: "Font Awesome 6 Free"; font-weight: 900;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 1.5rem; color: rgba(239, 68, 68, 0.2); pointer-events: none; z-index: 0;
+        }
+        .blocked-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 2px dashed #f87171; pointer-events: none; z-index: 20; }
+
+        .subject-btn { transition: all 0.1s; user-select: none; }
+        .subject-btn:active { transform: scale(0.95); }
+
+        /* Chips - Optimized for Layout */
+        .entry-chip {
+            border-radius: 4px; 
+            font-weight: 600; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05); 
+            width: 100%; 
+            transition: all 0.2s; 
+            position: relative; 
+            z-index: 10; 
+            cursor: pointer;
+            padding: 2px; 
+        }
+        .entry-chip:not(.dimmed):hover { transform: scale(1.02); box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 30; }
+        .entry-chip.dimmed { opacity: 0.3; filter: grayscale(100%); transform: scale(0.98); }
+        .entry-chip.dimmed:hover { opacity: 0.8; filter: grayscale(0%); transform: scale(1.0); z-index: 30; }
+
+        /* Chip Content Styling */
+        .chip-subject {
+            font-size: 0.85rem; 
+            line-height: 1;
+            word-break: break-word; 
+            max-width: 100%;
+            font-weight: 800;
+        }
+        .chip-class {
+            font-size: 0.65rem;
+            line-height: 1;
+            margin-top: 1px;
+            opacity: 0.85;
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        /* Global Subject Chip Style - Standard */
+        .global-chip {
+            background-color: #334155 !important; 
+            color: white !important;
+            border: 2px solid #475569 !important;
+            grid-column: 1 / -1 !important; 
+            z-index: 40 !important;
+        }
+        .global-chip .chip-subject {
+            font-size: 0.9rem; 
+        }
+        .global-chip .chip-class { 
+            color: #cbd5e1 !important; 
+            font-size: 0.6rem;
+        } 
+
+        /* SPECIAL STYLES FOR FÖA AND WPF (Subtle Greys) */
+        .global-chip.special-foea {
+            background-color: #64748b !important; 
+            border-color: #475569 !important;
+            color: #f1f5f9 !important;
+        }
+        .global-chip.special-foea .chip-subject {
+            font-size: 0.75rem !important; 
+        }
+
+        .global-chip.special-wpf {
+            background-color: #e2e8f0 !important; 
+            border-color: #cbd5e1 !important;
+            color: #334155 !important; 
+        }
+        .global-chip.special-wpf .chip-subject {
+            font-size: 0.7rem !important; 
+        }
+        .global-chip.special-wpf .chip-class {
+            color: #64748b !important; 
+        }
+        /* Icon color adjustment for light background */
+        .global-chip.special-wpf .magic-icon {
+            background: rgba(0,0,0,0.1); 
+            color: #334155;
+        }
+        
+        /* ZUP Special Style */
+        .global-chip.special-zup {
+            background-color: #ffedd5 !important; /* Orange 100 */
+            border-color: #fdba74 !important; /* Orange 300 */
+            color: #9a3412 !important; /* Orange 900 */
+        }
+        .global-chip.special-zup .chip-class {
+            color: #c2410c !important; /* Orange 700 */
+        }
+        .global-chip.special-zup .magic-icon {
+            color: #ea580c !important;
+        }
+
+
+        /* Markers */
+        .magic-selected { border: 2px solid #f59e0b !important; box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); z-index: 25 !important; }
+        .manual-selected { border: 2px solid #059669 !important; box-shadow: 0 0 8px rgba(5, 150, 105, 0.5); z-index: 26 !important; }
+
+        .magic-icon {
+            position: absolute; bottom: 2px; right: 2px; background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%; width: 12px; height: 12px; font-size: 8px;
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            z-index: 20;
+        }
+        .magic-icon.auto { color: #b45309; }
+        
+        /* NEW CHIP BUTTONS */
+        .chip-btn {
+            position: absolute;
+            width: 16px; 
+            height: 16px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            border-radius: 50%; 
+            font-size: 9px;
+            cursor: pointer;
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.2s, background 0.2s, transform 0.1s;
+            z-index: 50;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        /* Hover target area to show buttons */
+        .entry-chip:hover .chip-btn { opacity: 1; }
+        
+        .chip-btn.delete { top: 1px; left: 1px; color: #ef4444; }
+        .chip-btn.delete:hover { background: #ef4444; color: white; transform: scale(1.1); }
+        
+        .chip-btn.pin { top: 1px; right: 1px; color: #cbd5e1; } /* Default gray pin */
+        .chip-btn.pin:hover { color: #10b981; transform: scale(1.1); }
+        .chip-btn.pin.active { opacity: 1; color: #10b981; font-weight: bold; background: #ecfdf5; } /* Active green pin */
+
+
+        /* UI Elements */
+        .toast {
+            position: fixed; top: 20px; right: 20px; background: #10b981; color: white;
+            padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0; transform: translateY(-20px); transition: all 0.3s; pointer-events: none; z-index: 200; font-weight: 600; display: flex; align-items: center;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.error { background: #ef4444; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center; z-index: 200;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        
+        .modal-box {
+            background: white; padding: 24px; border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 500px; width: 90%;
+            max-height: 90vh; 
+            transform: scale(0.95); transition: transform 0.2s;
+        }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+
+        .live-stats-panel {
+            position: fixed; bottom: 20px; right: 20px; width: 320px;
+            background: white; border-radius: 12px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
+            z-index: 100; display: flex; flex-direction: column; border: 1px solid #e5e7eb;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); max-height: 80vh;
+        }
+        .live-stats-panel.minimized { transform: translateY(calc(100% - 48px)); }
+        .live-stats-header {
+            padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #e5e7eb;
+            border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+        }
+        .live-stats-content { padding: 0; overflow-y: auto; flex-grow: 1; }
+        
+        .fa-spin-fast { animation: fa-spin 1s infinite linear; }
+
+        /* Print Preview Modal Specifics */
+        #printPreviewModal .modal-box {
+            max-width: 95vw;
+            width: 1200px;
+            padding: 20px;
+            background: white;
+            overflow-y: auto; 
+        }
+
+        #printPreviewContent {
+            border: 1px solid #ddd;
+            padding: 1cm;
+            background: white;
+            overflow: visible; 
+            display: block;
+        }
+
+        /* Help Modal specific styles */
+        .help-content h3 { font-weight: bold; font-size: 1.1em; margin-top: 1em; margin-bottom: 0.5em; color: #1e293b; }
+        .help-content ul, .help-content ol { padding-left: 1.2em; margin-bottom: 1em; }
+        .help-content ul { list-style-type: disc; }
+        .help-content ol { list-style-type: decimal; }
+        .help-content li { margin-bottom: 0.3em; color: #475569; font-size: 0.95em; }
+        .help-content strong { color: #0f172a; }
+
+        /* BLOCKING MODE VISUALS */
+        .blocking-banner {
+            display: none;
+            background-color: #ef4444; /* Red 500 */
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: -1px; /* Connect to table */
+            z-index: 50;
+            animation: pulse-red 2s infinite;
+        }
+        
+        body.blocking-active .blocking-banner { display: block; }
+        body.blocking-active #mainTimetable {
+            border: 4px solid #ef4444 !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        @keyframes pulse-red {
+            0% { background-color: #ef4444; }
+            50% { background-color: #b91c1c; } /* Red 700 */
+            100% { background-color: #ef4444; }
+        }
+
+        /* SCAN MODE STYLES */
+        .scan-controls {
+            position: fixed; bottom: 20px; left: 20px; width: 280px;
+            background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 9000; display: none; padding: 16px; border: 1px solid #e5e7eb;
+        }
+        .scan-controls.show { display: block; }
+        
+        #timetableBody {
+            /* No background image here anymore */
+            position: relative; /* For absolute children */
+        }
+        
+        /* Scan Image Layer */
+        #scanImageLayer {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform-origin: center center;
+            z-index: 0;
+            pointer-events: none; /* Let clicks pass through, JS handles drag via parent */
+            max-width: none; /* Allow image to be any size */
+        }
+        
+        /* Transparent Mode for Scanning */
+        body.scan-active #mainTimetable { background: transparent !important; }
+        
+        /* Make cells see-through */
+        body.scan-active .print-lesson, 
+        body.scan-active .print-break {
+            background-color: rgba(255, 255, 255, 0.7) !important;
+            position: relative;
+            z-index: 10;
+        }
+        body.scan-active .time-col {
+            background-color: rgba(248, 250, 252, 0.8) !important;
+            position: relative;
+            z-index: 10;
+        }
+        body.scan-active .print-lesson > div:not(.time-col) {
+            background-color: transparent !important;
+            position: relative;
+            z-index: 10;
+        }
+        body.scan-active .print-break { opacity: 0.8; z-index: 10; position: relative; }
+        
+        /* FIX: Active Cell in Scan Mode should be see-through */
+        body.scan-active .active-cell {
+            background-color: rgba(255, 255, 255, 0.3) !important; 
+            border: 3px solid rgba(59, 130, 246, 0.8) !important;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* ADJUSTMENT MODE: Cursor change */
+        body.scan-adjust-mode #timetableBody {
+            cursor: move;
+            overflow: hidden !important; /* Disable scrolling while dragging image */
+        }
+
+
+        /* TOUR STYLES */
+        .tour-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 9000; pointer-events: none;
+            display: none;
+        }
+        .tour-overlay.active { display: block; }
+        
+        .tour-spotlight {
+            position: absolute;
+            border-radius: 8px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+            transition: all 0.4s ease-out;
+            pointer-events: none;
+            z-index: 9001;
+        }
+        
+        .tour-tooltip {
+            position: absolute;
+            width: 340px; 
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+            z-index: 9002;
+            opacity: 0;
+            transition: opacity 0.3s ease, top 0.3s ease, left 0.3s ease;
+            pointer-events: auto;
+        }
+        .tour-tooltip.visible { opacity: 1; }
+
+        /* PRINT STYLES */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 1cm; 
+            }
+            body > *:not(#printPreviewModal) { display: none !important; }
+            
+            #printPreviewModal {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                background: white !important;
+                display: block !important;
+                opacity: 1 !important;
+                z-index: 9999 !important;
+            }
+            
+            #printPreviewModal .modal-box {
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                transform: none !important;
+                max-height: none !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            #printPreviewModal .modal-actions, 
+            #printPreviewModal h3 { display: none !important; }
+
+            #printPreviewContent {
+                border: none !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: visible !important;
+            }
+            
+            /* Global Chips in Print - Default */
+            .global-chip {
+                background-color: #334155 !important;
+                color: white !important;
+                border: 1px solid black !important;
+            }
+            .global-chip span { color: #e2e8f0 !important; }
+
+            /* Print overrides for FÖA/WPF */
+            .global-chip.special-foea {
+                background-color: #94a3b8 !important; /* Lighter grey for print */
+                color: black !important;
+                border: 1px solid #64748b !important;
+            }
+            .global-chip.special-foea span { color: black !important; }
+
+            .global-chip.special-wpf {
+                background-color: #e2e8f0 !important; /* Very light grey */
+                color: black !important;
+                border: 1px dotted #94a3b8 !important;
+            }
+            .global-chip.special-wpf span { color: black !important; }
+            
+            .global-chip.special-zup {
+                background-color: #ffedd5 !important;
+                border: 1px solid #fdba74 !important;
+                color: black !important;
+            }
+            .global-chip.special-zup span { color: black !important; }
+
+
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+
+        /* Print Table Styling - EXACT DIMENSIONS (cm) */
+        .print-table {
+            width: auto; /* Width determined by column widths */
+            border-collapse: collapse;
+            font-size: 10pt; 
+            font-family: Arial, sans-serif;
+            table-layout: fixed; /* STRICT LAYOUT */
+            color: black;
+        }
+        
+        .print-table th, .print-table td {
+            border: 1px solid #000;
+            text-align: center;
+            padding: 0;
+            vertical-align: middle;
+            box-sizing: border-box;
+            overflow: hidden; /* Prevent expansion */
+        }
+
+        /* 1. Header Row Height: 0.9cm */
+        .print-table thead th {
+            background-color: #e2e8f0;
+            font-weight: bold;
+            height: 0.9cm !important;
+            font-size: 11pt;
+        }
+        
+        /* 2. Content Row Height: 1.561cm */
+        .print-table tbody tr { 
+            height: 1.561cm !important; 
+        } 
+        
+        /* 3. Break Row Height: 0.58cm */
+        .print-table tbody tr.break-row { 
+            height: 0.58cm !important; 
+        }
+
+        /* 4. Day Columns Width: 4.66cm */
+        .print-table th, .print-table td {
+            width: 4.66cm !important;
+            min-width: 4.66cm !important;
+            max-width: 4.66cm !important;
+        }
+
+        /* 5. Time Column Width: 1.3cm */
+        .print-table .time-col,
+        .print-table th.time-col {
+            width: 1.3cm !important;
+            min-width: 1.3cm !important;
+            max-width: 1.3cm !important;
+            background-color: white;
+            font-weight: bold;
+            font-size: 9pt;
+        }
+
+        .print-table .break-row td {
+            background-color: #f1f5f9;
+            font-size: 9pt;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #333;
+            font-weight: bold;
+            border-top: 1px double #000;
+            border-bottom: 1px double #000;
+        }
+        .print-cell-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 1px;
+            overflow: hidden;
+        }
+        .preview-subject { font-size: 12px; font-weight: 800; line-height: 1.1; word-break: break-word; text-align: center; }
+        .preview-class { font-size: 9px; margin-top: 1px; line-height: 1; word-break: break-word; text-align: center; white-space: normal; }
+        
+        /* Doc Header Style */
+        .doc-header-container {
+            border-bottom: 2px solid #000;
+            font-family: Arial, sans-serif;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-end;
+        }
+        .doc-title {
+            font-size: 24pt;
+            font-weight: bold;
+            margin: 0;
+            color: #000;
+            line-height: 1.2;
+        }
+        .doc-subtitle {
+            font-size: 14pt;
+            margin: 5px 0 0 0;
+            color: #333;
+        }
+        .doc-date {
+            font-size: 11pt;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-row overflow-hidden text-gray-800 bg-gray-100 font-sans">
+
+    <div id="toast" class="toast"><i class="fas fa-check-circle mr-2"></i><span id="toastMsg">Erfolgreich!</span></div>
+
+    <!-- Modals -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-box" style="overflow-y: auto;">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Bestätigung</h3>
+            <p id="confirmText" class="text-gray-600 mb-6">Sind Sie sicher?</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeConfirm(false)" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Abbrechen</button>
+                <button onclick="closeConfirm(true)" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-bold">Ja, Löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCAN CONTROLS (NEW) -->
+    <div id="scanControls" class="scan-controls">
+        <div class="flex justify-between items-center mb-4">
+            <h4 class="font-bold text-gray-800 text-sm"><i class="fas fa-camera mr-2 text-blue-500"></i>Scan-Vorlage anpassen</h4>
+            <!-- Close button removed to enforce workflow, added Finish button below -->
+        </div>
+        <p class="text-[10px] text-gray-500 mb-3 leading-tight">1. Schiebe das Bild direkt mit dem Finger.<br>2. Zoome mit zwei Fingern.<br>3. Klicke "Fertig" zum Fixieren.</p>
+        
+        <div class="space-y-3">
+            <div>
+                <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Transparenz Plan</label>
+                <input type="range" min="0" max="100" value="70" id="scanOpacitySlider" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="updateScanOpacity(this.value)">
+            </div>
+            
+            <div>
+                <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Größe (Zoom)</label>
+                <input type="range" min="20" max="500" value="100" id="scanZoomSlider" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="updateScanZoom(this.value)">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">X-Pos</label>
+                    <input type="range" min="-500" max="500" value="0" id="scanXSlider" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="updateScanX(this.value)">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Y-Pos</label>
+                    <input type="range" min="-500" max="500" value="0" id="scanYSlider" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="updateScanY(this.value)">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Drehen (°)</label>
+                <input type="range" min="-180" max="180" value="0" id="scanRotateSlider" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="updateScanRotation(this.value)">
+            </div>
+            
+             <div class="pt-3 border-t border-gray-100 flex flex-col gap-2">
+                 <button onclick="finishScanAdjustment()" class="w-full text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow-sm">Fertig & Fixieren</button>
+                 <div class="flex gap-2">
+                    <button onclick="document.getElementById('scanImportFile').click()" class="flex-1 text-xs bg-gray-50 border border-gray-200 hover:bg-white text-gray-600 py-1.5 rounded">Neues Bild</button>
+                    <button onclick="removeScan()" class="flex-1 text-xs bg-red-50 border border-red-200 hover:bg-red-100 text-red-600 py-1.5 rounded">Bild löschen</button>
+                 </div>
+             </div>
+        </div>
+    </div>
+    
+    <!-- Button to reopen scan adjustment if scan is active -->
+    <div id="reopenScanBtn" class="fixed bottom-5 left-5 z-50 hidden">
+        <button onclick="reopenScanAdjustment()" class="bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 shadow-lg px-3 py-2 rounded-full text-xs font-bold flex items-center gap-2">
+            <i class="fas fa-camera"></i> Scan anpassen
+        </button>
+    </div>
+
+    <!-- TOUR UI -->
+    <div id="tourOverlay" class="tour-overlay">
+        <div id="tourSpotlight" class="tour-spotlight"></div>
+        <div id="tourTooltip" class="tour-tooltip">
+            <div class="flex justify-between items-start mb-2">
+                <h3 id="tourTitle" class="font-bold text-lg text-gray-800">Willkommen!</h3>
+                <button onclick="endTour()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <p id="tourText" class="text-sm text-gray-600 mb-4 leading-relaxed">Hier ist eine kurze Einführung.</p>
+            <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                <label class="flex items-center text-xs text-gray-500 cursor-pointer">
+                    <input type="checkbox" id="tourDontShowAgain" class="mr-1 rounded text-blue-500"> Nicht mehr anzeigen
+                </label>
+                <div class="flex gap-2">
+                    <button onclick="endTour()" class="text-xs text-gray-500 hover:text-gray-800 px-2 py-1">Beenden</button>
+                    <button onclick="nextTourStep()" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded font-bold">Weiter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Print Preview Modal -->
+    <div id="printPreviewModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center"><i class="fas fa-print mr-2 text-blue-500"></i> Druckvorschau</h3>
+            <div id="printPreviewContent"></div>
+            <div class="flex justify-end gap-3 mt-4 modal-actions">
+                <button onclick="document.getElementById('printPreviewModal').classList.remove('show')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Schließen</button>
+                <button onclick="window.print()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold shadow-md"><i class="fas fa-print mr-2"></i> Drucken</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultModal" class="modal-overlay">
+        <div class="modal-box max-w-lg" style="overflow-y: auto;">
+            <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center"><i class="fas fa-chart-pie mr-2 text-amber-500"></i> Verteilungsergebnis</h3>
+            <div id="resultContent" class="text-gray-600 mb-6 text-sm max-h-[60vh] overflow-y-auto pr-2"></div>
+            <div class="flex justify-end"><button onclick="closeResult()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold shadow-md">OK, Danke</button></div>
+        </div>
+    </div>
+
+    <!-- NEW MAGIC SETTINGS MODAL -->
+    <div id="magicSettingsModal" class="modal-overlay">
+        <div class="modal-box max-w-lg flex flex-col max-h-[85vh]">
+            <div class="flex-shrink-0">
+                <h3 class="text-lg font-bold text-gray-900 mb-2 flex items-center"><i class="fas fa-cogs mr-2 text-gray-500"></i> Fächer verwalten</h3>
+                <p class="text-sm text-gray-500 mb-4 leading-relaxed">
+                    <strong>Wofür ist das?</strong> Hier definierst du deinen persönlichen Fächer-Pool.<br>
+                    👁️ <strong>Auge:</strong> Zeigt das Fach in der linken Seitenleiste an.<br>
+                    ✨ <strong>Haken:</strong> Dieses Fach wird beim Klick auf "Auto" automatisch verteilt.
+                </p>
+                <div class="flex gap-2 mb-2 bg-gray-50 p-2 rounded border border-gray-200">
+                    <input type="text" id="newSubjectInput" placeholder="Suchen oder neu..." class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500" onkeypress="handleNewSubjectEnter(event)" oninput="filterMagicSettings(this.value)">
+                    <button onclick="addNewSubject()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="flex gap-2 mb-4">
+                    <button onclick="deselectAllMagic()" class="flex-1 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 py-1.5 rounded text-xs font-bold shadow-sm transition"><i class="fas fa-square mr-1"></i> Auto-Auswahl aufheben</button>
+                    <button onclick="showAllSubjects()" class="flex-1 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 py-1.5 rounded text-xs font-bold shadow-sm transition"><i class="fas fa-eye mr-1"></i> Alle einblenden</button>
+                </div>
+                <div class="flex justify-between items-center px-2 mb-2 text-xs font-bold text-gray-500 border-b border-gray-100 pb-1">
+                    <span class="uppercase">Fachname</span>
+                    <div class="flex items-center gap-4 mr-8">
+                        <span title="Sichtbar" class="w-6 text-center text-base"><i class="fas fa-eye"></i></span>
+                        <span title="Auto-Verteilung" class="w-4 text-center text-base"><i class="fas fa-check-square"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div id="magicSettingsList" class="space-y-1 mb-4 overflow-y-auto flex-1 min-h-0 pr-2 border-t border-b border-gray-50 py-2"></div>
+            <div class="flex-shrink-0 flex justify-end gap-3 mt-auto">
+                <button onclick="closeMagicSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold w-full sm:w-auto">Fertig</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rulesModal" class="modal-overlay">
+        <div class="modal-box max-w-xl" style="overflow-y: auto;">
+            <h3 class="text-lg font-bold text-gray-900 mb-2 flex items-center"><i class="fas fa-list-ol mr-2 text-blue-500"></i> Regeln</h3>
+            <p class="text-sm text-gray-500 mb-4 leading-relaxed">Hier kannst du der Automatik feste Vorgaben geben. <br><em>Beispiel:</em> "Die Klasse 6a braucht zwingend 4 Stunden Mathe."</p>
+            <div class="flex gap-2 mb-4 items-end bg-gray-50 p-2 rounded border border-gray-200">
+                <div class="flex-1"><label class="block text-[10px] uppercase text-gray-500 font-bold mb-1">Klasse</label><select id="ruleClassSelect" class="w-full text-sm border-gray-300 rounded p-1"></select></div>
+                <div class="flex-1"><label class="block text-[10px] uppercase text-gray-500 font-bold mb-1">Fach</label><select id="ruleSubjectSelect" class="w-full text-sm border-gray-300 rounded p-1"></select></div>
+                <div class="w-16"><label class="block text-[10px] uppercase text-gray-500 font-bold mb-1">Std.</label><input type="number" id="ruleCountInput" value="1" min="1" max="10" class="w-full text-sm border-gray-300 rounded p-1"></div>
+                <button onclick="addRule()" class="bg-green-500 text-white px-3 py-1.5 rounded hover:bg-green-600"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="ruleList" class="space-y-2 mb-6 max-h-[30vh] overflow-y-auto"></div>
+            <div class="flex justify-end gap-3"><button onclick="closeRulesModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Schließen</button></div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal-overlay">
+        <div class="modal-box max-w-2xl" style="overflow-y: auto;">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center border-b pb-2"><i class="fas fa-book-reader mr-2 text-blue-500"></i> Anleitung</h3>
+            <div class="help-content overflow-y-auto max-h-[60vh] pr-2 text-sm space-y-4">
+                <section>
+                    <h3>1. Der Start: Wer bist du? 📝</h3>
+                    <p>Ganz oben findest du die Leiste für deine <strong>Persönlichen Daten</strong>. Trage dort deinen Namen, Kürzel, Jahrgang und das Schuljahr ein. Diese Infos erscheinen später schön formatiert auf deinem Ausdruck.</p>
+                </section>
+
+                <section>
+                    <h3>2. Klassen anlegen 🏫</h3>
+                    <p>Rechts daneben erstellst du deine Klassen. Tippe einfach den Namen (z.B. <code>6a</code>) ein und drücke <strong>Enter</strong> oder auf das <strong>+</strong>. Die Klassen erscheinen dann als kleine Buttons in der Leiste.</p>
+                </section>
+
+                <section>
+                    <h3>3. Der Stundenplan: Manuelle Eingabe ✍🏻</h3>
+                    <p>Wähle zuerst oben eine Klasse aus (sie wird farbig markiert). Klicke dann links in der Leiste auf ein <strong>Fach</strong>. Der Planer beginnt bei Mo-1.Std und springt automatisch weiter. Fertig? Dann wähle die nächste Klasse.</p>
+                </section>
+                
+                <section>
+                    <h3>NEU: Scan-Vorlage 📷</h3>
+                    <p>Du hast einen alten Plan als Bild? Klicke oben auf das <strong>Kamera-Icon</strong>.</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li><strong>Anpassungs-Modus:</strong> Lade ein Bild hoch. Der Plan wird gesperrt (das Scrollen stoppt), damit du das Bild <strong>direkt mit dem Finger/Maus</strong> an die richtige Stelle schieben kannst.</li>
+                        <li><strong>Eingabe-Modus:</strong> Klicke auf "Fertig & Fixieren". Jetzt kannst du wie gewohnt Fächer eintragen – dein Bild bleibt transparent im Hintergrund liegen.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>4. Korrigieren & Fixieren 📌</h3>
+                    <p>Hier hast du die volle Kontrolle:</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li><strong>Löschen (X):</strong> Fahre mit der Maus über ein Fach im Plan. Oben links erscheint ein rotes <strong>X</strong>. Ein Klick, und das Fach ist weg.</li>
+                        <li><strong>Pinnen (Fixieren):</strong> Oben rechts im Fach siehst du eine Nadel. Klicke sie an, damit sie <strong>grün</strong> wird. Das bedeutet: "Dieses Fach ist heilig!". Die Automatik wird es <strong>nicht</strong> verschieben. Perfekt für feste Termine.</li>
+                        <li><strong>Ändern:</strong> Klicke ein Feld an (blauer Rahmen) und wähle ein anderes Fach, um es auszutauschen.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>5. Die Automatik & Konfiguration ⚙️</h3>
+                    <p>Bevor du die Magie startest:</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li><strong>Sperren (⛔):</strong> Klicke auf den "Sperren"-Button und markiere Zeiten im Plan, an denen du gar nicht kannst.</li>
+                        <li><strong>Fächer-Pool (Zahnrad):</strong> Wähle hier aus, welche Fächer überhaupt verteilt werden sollen.</li>
+                        <li><strong>Regeln:</strong> Definiere Zwänge wie "Klasse 6a muss 2x Mathe haben".</li>
+                    </ul>
+                    <p class="mt-2">Alles bereit? Klicke auf <strong>Auto</strong>. Der Algorithmus berechnet nun fair die Verteilung. Das Ergebnis siehst du sofort in der Statistik.</p>
+                </section>
+
+                <section>
+                    <h3>6. Abschluss & Export 🖨️</h3>
+                    <p>Nach der Automatik kannst du natürlich noch manuell eingreifen und Fächer verschieben. Wenn alles passt:</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li><strong>Drucken:</strong> Erzeugt eine saubere PDF-Ansicht.</li>
+                        <li><strong>Speichern (Diskette):</strong> Speichert den aktuellen Stand als Datei auf deinem PC, damit du später weitermachen kannst.</li>
+                    </ul>
+                </section>
+            </div>
+            <div class="flex justify-end mt-2">
+                <button onclick="startTour()" class="px-4 py-2 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded font-bold mr-2">Tour starten</button>
+                <button onclick="document.getElementById('helpModal').classList.remove('show')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold shadow-md">Verstanden</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="w-80 bg-white shadow-xl z-30 flex flex-col h-full border-r border-gray-200 flex-shrink-0 no-print">
+        <div class="p-3 border-b border-gray-100 bg-gray-50">
+            <div class="flex flex-col mb-2">
+                <h1 class="text-lg font-bold text-gray-800 flex items-center mb-1"><i class="fas fa-layer-group text-blue-600 mr-2"></i> SopädStundenplaner</h1>
+                <div class="flex gap-1 justify-end w-full" id="toolbarActions">
+                    <button onclick="exportToFile()" class="text-emerald-600 hover:bg-emerald-100 p-1.5 rounded transition" title="Speichern"><i class="fas fa-save"></i></button>
+                    <button onclick="document.getElementById('importFile').click()" class="text-blue-600 hover:bg-blue-100 p-1.5 rounded transition" title="Laden"><i class="fas fa-folder-open"></i></button>
+                    <input type="file" id="importFile" class="hidden" accept=".json" onchange="importFromFile(this)">
+                    
+                    <!-- NEW SCAN BUTTON -->
+                    <button onclick="document.getElementById('scanImportFile').click()" class="text-purple-600 hover:bg-purple-100 p-1.5 rounded transition" title="Scan-Vorlage laden"><i class="fas fa-camera"></i></button>
+                    <input type="file" id="scanImportFile" class="hidden" accept="image/*" onchange="handleScanUpload(this)">
+                    
+                    <button onclick="requestClearTimetable()" class="text-red-500 hover:bg-red-100 p-1.5 rounded transition" title="Löschen"><i class="fas fa-trash-alt"></i></button>
+                    <button onclick="openPrintPreview()" class="text-gray-600 hover:bg-gray-200 p-1.5 rounded transition" title="Drucken"><i class="fas fa-print"></i></button>
+                    <button onclick="document.getElementById('helpModal').classList.add('show')" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded transition" title="Hilfe"><i class="fas fa-question-circle"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-3 space-y-4" id="sidebarScrollArea">
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-2" id="targetHoursSection">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-bold text-amber-800 uppercase">Unterrichtsstunden</span>
+                    <input type="number" id="teacherHours" value="27" min="1" max="40" onchange="updateLiveStats()" class="w-12 text-sm text-center border border-amber-300 rounded bg-white">
+                </div>
+                <div class="text-[9px] text-amber-800 mb-1 opacity-80 text-center font-medium">Konfiguration: Sperren, Regeln, Fächer & Bericht</div>
+                <div class="grid grid-cols-4 gap-2 mb-2">
+                    <button id="blockToggleBtn" onclick="toggleBlockingMode()" class="bg-white border border-red-300 text-red-500 hover:bg-red-50 p-1.5 rounded text-xs flex justify-center" title="Sperren"><i class="fas fa-ban"></i></button>
+                    <button id="btnRules" onclick="openRulesModal()" class="bg-white border border-blue-300 text-blue-600 hover:bg-blue-50 p-1.5 rounded text-xs flex justify-center" title="Regeln"><i class="fas fa-list-ol"></i></button>
+                    <button id="btnMagicSettings" onclick="openMagicSettings()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-1.5 rounded text-xs flex justify-center" title="Fächer"><i class="fas fa-cog"></i></button>
+                    <button onclick="reopenResult()" class="bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 p-1.5 rounded text-xs flex justify-center" title="Bericht"><i class="fas fa-chart-bar"></i></button>
+                </div>
+                <div class="flex gap-2" id="autoButtonSection">
+                    <button onclick="runMagicAlgorithm()" class="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white py-1.5 rounded text-xs font-bold shadow-sm transition"><i class="fas fa-magic mr-1"></i> Auto</button>
+                    <button onclick="clearMagicSelection()" class="px-2 text-xs text-amber-700 underline hover:text-amber-900">Reset</button>
+                </div>
+            </div>
+            
+            <div id="subjectSection">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase">Fächer</span>
+                    <span id="selectedClassDisplay" class="text-xs font-bold text-blue-600 h-4"></span>
+                </div>
+                <div class="grid grid-cols-4 gap-1" id="subjectGrid"></div>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-gray-500 uppercase block mb-2">Navigation</span>
+                <div class="flex flex-wrap gap-1">
+                    <button onclick="setCursor(0, 1)" class="flex-1 bg-white border border-gray-300 rounded py-1 text-xs hover:bg-gray-50">Mo</button>
+                    <button onclick="setCursor(1, 1)" class="flex-1 bg-white border border-gray-300 rounded py-1 text-xs hover:bg-gray-50">Di</button>
+                    <button onclick="setCursor(2, 1)" class="flex-1 bg-white border border-gray-300 rounded py-1 text-xs hover:bg-gray-50">Mi</button>
+                    <button onclick="setCursor(3, 1)" class="flex-1 bg-white border border-gray-300 rounded py-1 text-xs hover:bg-gray-50">Do</button>
+                    <button onclick="setCursor(4, 1)" class="flex-1 bg-white border border-gray-300 rounded py-1 text-xs hover:bg-gray-50">Fr</button>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="clearActiveCell()" class="flex-1 bg-white border border-red-200 text-red-500 rounded py-1 text-xs hover:bg-red-50"><i class="fas fa-eraser"></i> Feld</button>
+                    <button id="demoDataBtn" onclick="fillTestSchedule()" class="flex-1 bg-rose-50 text-rose-600 border border-rose-200 rounded py-1 text-xs hover:bg-rose-100"><i class="fas fa-flask"></i> Demo</button>
+                </div>
+            </div>
+        </div>
+        <div class="p-3 bg-slate-50 border-t border-gray-200" id="statsFooter" data-position="bottom">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
+                    Verteilung 
+                    <button onclick="toggleStatsPosition()" class="text-gray-400 hover:text-blue-600 transition-transform duration-200" title="Verschieben"><i id="statsPositionArrow" class="fas fa-chevron-up"></i></button>
+                </span>
+                <span id="totalAssignedBadge" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">0/27</span>
+            </div>
+            <div id="liveStatsContent" class="text-xs text-gray-600 max-h-32 overflow-y-auto pr-1"><p class="text-gray-400 italic text-center py-2">Leer</p></div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-gray-100 p-4 print:p-0">
+        <div id="topBar" class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 mb-3 flex flex-col gap-3 print:hidden">
+            <div class="flex gap-4 items-start">
+                <div class="flex-1 border-r border-gray-100 pr-4" id="personalDataSection">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Persönliche Daten</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="teacherNameInput" placeholder="Name" class="flex-[2] border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500">
+                        <input type="text" id="gradeLevelInput" placeholder="Jahrg." class="flex-1 w-16 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500">
+                        <input type="text" id="schoolYearInput" placeholder="Schuljahr" class="flex-1 w-20 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="flex-1" id="classInputSection">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Neue Klasse</label>
+                    <div class="flex gap-1">
+                        <input type="text" id="classInput" placeholder="z.B. 6a..." class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500" onkeypress="handleClassEnter(event)">
+                        <button onclick="addClass()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-sm"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div id="classList" class="flex flex-wrap gap-2 min-h-[32px] items-center pt-1 border-t border-gray-50">
+                <span class="text-gray-400 text-xs italic">Keine Klassen...</span>
+            </div>
+        </div>
+
+        <div id="blockingBanner" class="blocking-banner">
+            <i class="fas fa-hand-paper mr-2"></i>SPERR-MODUS AKTIV - Markiere die Flächen, in denen du nicht arbeiten kannst
+        </div>
+
+        <div id="mainTimetable" class="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-300 flex-1 flex flex-col print:border-none print:shadow-none">
+            <div id="timetableHeader" class="grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] bg-slate-800 text-white text-center font-bold text-sm shadow-md z-10 flex-shrink-0 transition-colors duration-300">
+                <div class="p-2 border-r border-slate-600/30">Zeit</div>
+                <div class="p-2 border-r border-slate-600/30">Mo</div>
+                <div class="p-2 border-r border-slate-600/30">Di</div>
+                <div class="p-2 border-r border-slate-600/30">Mi</div>
+                <div class="p-2 border-r border-slate-600/30">Do</div>
+                <div class="p-2">Fr</div>
+            </div>
+            <div id="timetableBody" class="text-sm overflow-y-auto flex-1 bg-white"></div>
+        </div>
+        <div class="text-center text-gray-400 text-[10px] mt-2 no-print">
+            <span class="font-bold text-amber-600">Gold (🎓)</span> = Auto. <span class="font-bold text-emerald-600 ml-1">Grün (📌)</span> = Fix. <span class="font-bold text-red-500 ml-1">Schraffiert (⛔)</span> = Gesperrt.
+        </div>
+    </main>
+
+    <script>
+        // --- HELPERS (MOVED UP FOR SAFETY) ---
+        function addEntry(cellId, subject, clsObj) { 
+            let entries = timetableData[cellId] || []; 
+            entries.push({ subject: subject, className: clsObj.name, colorClass: clsObj.colorClass, isMagicSelected: false, isManual: false }); 
+            timetableData[cellId] = entries; 
+        }
+
+        // --- 1. CONFIGURATION ---
+        let allSubjects = [
+            "BIO", "BSO", "CARE", "CHE-E", "CHE-G", "DEU", "DEU-E", "DEU-G", 
+            "ENG", "ENG-E", "ENG-G", "FÖA", "GGP", "GSE", "IPAD", "KS", "KUN", 
+            "MAT", "MAT-E", "MAT-G", "MEN", "MUS", "NAT", "PHY-E", "PHY-G", 
+            "RAT", "REL", "SOL", "SOZ", "SPA", "SPO", "TUE", "WAT", "WPF", "ZUP", "---"
+        ];
+        
+        const subjectColors = {
+            "BIO": "#6BE5C3", "BSO": "#D97C34", "CARE": "#C4A661", "CHE-E": "#9B30FF",
+            "CHE-G": "#702090", "DEU": "#D97C34", "DEU-E": "#3B5CD7", "DEU-G": "#8B5742",
+            "ENG": "#9D4EDD", "ENG-E": "#6E8B3D", "ENG-G": "#245837", "FÖA": "#BD805C",
+            "GGP": "#E0C3FC", "GSE": "#9CCF5E", "IPAD": "#C4A661", "KS": "#5AFF5A",
+            "KUN": "#1A4035", "MAT": "#5AFF5A", "MAT-E": "#BA3628", "MAT-G": "#245837",
+            "MEN": "#F53DF5", "MUS": "#D1458F", "NAT": "#7B92B6", "PHY-E": "#D040B0",
+            "PHY-G": "#4B70C0", "RAT": "#3B5CD7", "REL": "#D97C34", "SOL": "#D97C34",
+            "SOZ": "#D97C34", "SPA": "#D97C34", "SPO": "#682568", "TUE": "#BD805C",
+            "WAT": "#BA3628", "WPF": "#5D6D7E", "ZUP": "#C46F3A"
+        };
+        
+        const GLOBAL_SUBJECTS = ["FÖA", "WPF", "SPA", "TUE", "MEN", "ZUP"];
+        
+        const classColors = [
+            'bg-red-200 text-red-900 border-red-300',        
+            'bg-blue-200 text-blue-900 border-blue-300',     
+            'bg-green-200 text-green-900 border-green-300',   
+            'bg-amber-200 text-amber-900 border-amber-300',   
+            'bg-purple-200 text-purple-900 border-purple-300', 
+            'bg-cyan-200 text-cyan-900 border-cyan-300'        
+        ];
+        
+        const scheduleStructure = [ { id: 1, type: 'lesson', start: '08:05', end: '08:50' }, { id: 2, type: 'lesson', start: '08:50', end: '09:35' }, { type: 'break', start: '09:35', end: '09:55', label: 'Pause' }, { id: 3, type: 'lesson', start: '09:55', end: '10:40' }, { id: 4, type: 'lesson', start: '10:40', end: '11:25' }, { type: 'break', start: '11:25', end: '11:45', label: 'Pause' }, { id: 5, type: 'lesson', start: '11:45', end: '12:30' }, { id: 6, type: 'lesson', start: '12:30', end: '13:15' }, { type: 'break', start: '13:15', end: '13:30', label: 'Pause' }, { id: 7, type: 'lesson', start: '13:30', end: '14:15' }, { id: 8, type: 'lesson', start: '14:50', end: '15:00' } ];
+
+        // --- 2. STATE ---
+        let classes = []; let selectedClassIndex = -1; let timetableData = {}; let blockedSlots = new Set(); let cursor = { day: 0, period: 1 }; let isBlockingMode = false; let magicSubjectKeys = ["MAT", "DEU", "ENG"]; let magicRules = []; let lastResultData = null; let confirmCallback = null;
+        let hiddenSubjects = new Set();
+        
+        // Scan State
+        let scanImage = null;
+        let scanSettings = { zoom: 100, x: 0, y: 0, rotation: 0 }; // ADDED rotation
+        let isScanAdjustmentMode = false; 
+        
+        // DRAG & PINCH STATE FOR SCAN
+        let isDraggingScan = false;
+        let isPinching = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let initialScanX = 0;
+        let initialScanY = 0;
+        let pinchStartDist = 0;
+        let pinchStartZoom = 100;
+
+        // --- 3. UTILS ---
+        function getColorForClass(className) {
+            const lastChar = className.slice(-1).toLowerCase();
+            const map = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5 };
+            if (map.hasOwnProperty(lastChar)) { return classColors[map[lastChar]]; }
+            let hash = 0; for (let i = 0; i < className.length; i++) hash = className.charCodeAt(i) + ((hash << 5) - hash);
+            return classColors[Math.abs(hash) % classColors.length];
+        }
+
+        function showToast(msg, isError = false) { const t = document.getElementById('toast'); const tm = document.getElementById('toastMsg'); tm.textContent = msg; t.className = isError ? 'toast error show' : 'toast show'; setTimeout(() => { t.classList.remove('show'); }, 3000); }
+        function requestClearTimetable() { 
+            disableBlockingMode(); 
+            document.getElementById('confirmText').textContent = "Möchtest du wirklich den gesamten Stundenplan löschen?"; document.getElementById('confirmModal').classList.add('show'); confirmCallback = () => { timetableData = {}; blockedSlots = new Set(); lastResultData = null; magicRules = []; ensureZUP(); renderTimetable(); updateLiveStats(); showToast("Plan gelöscht."); }; 
+        }
+        function closeConfirm(result) { document.getElementById('confirmModal').classList.remove('show'); if (result && confirmCallback) confirmCallback(); confirmCallback = null; }
+        
+        // ZUP Logic
+        function ensureZUP() {
+            const zupId = 'd2-p5';
+            // Only add if not present
+            if (!timetableData[zupId] || !timetableData[zupId].some(e => e.subject === 'ZUP')) {
+                // Clear any existing to be safe or append? Requirement says "immer", so let's force it clean
+                timetableData[zupId] = []; 
+                timetableData[zupId].push({ 
+                    subject: "ZUP", 
+                    className: "", 
+                    colorClass: "special-zup", 
+                    isMagicSelected: false, 
+                    isManual: true 
+                });
+            }
+        }
+
+        function openPrintPreview() {
+            disableBlockingMode();
+            updateHeaderColor('neutral');
+            let html = '';
+            const name = document.getElementById('teacherNameInput').value || '_______________';
+            const grade = document.getElementById('gradeLevelInput').value || '____';
+            const year = document.getElementById('schoolYearInput').value || '____';
+            const currentDate = new Date().toLocaleDateString('de-DE'); 
+
+            html += `<div class="doc-header-container"><div><div class="doc-title">Stundenplan</div><div class="doc-subtitle">Lehrkraft: ${name} | Jahrgang: ${grade} | Schuljahr: ${year}</div></div><div class="doc-date">${currentDate}</div></div>`;
+            html += '<table class="print-table"><thead><tr><th class="time-col">Zeit</th>';
+            ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'].forEach(day => html += `<th>${day}</th>`);
+            html += '</tr></thead><tbody>';
+
+            scheduleStructure.forEach(slot => {
+                if (slot.type === 'break') {
+                    html += `<tr class="break-row"><td class="time-col" style="text-align:center;">-</td><td colspan="5">PAUSE (${slot.start} - ${slot.end})</td></tr>`;
+                } else {
+                    html += `<tr class="content-row"><td class="time-col">${slot.id}.<br><span style="font-weight:normal; font-size:9pt;">${slot.start}<br>${slot.end}</span></td>`;
+                    for (let day = 0; day < 5; day++) {
+                        const cellId = `d${day}-p${slot.id}`;
+                        const entries = timetableData[cellId] || [];
+                        const selectedEntries = entries.filter(e => e.isMagicSelected || e.isManual);
+                        let cellContent = '';
+                        let globalEntry = selectedEntries.find(e => GLOBAL_SUBJECTS.includes(e.subject));
+                        if (globalEntry) {
+                             let subText = classes.map(c => c.name).join(', ');
+                             if (globalEntry.subject === 'ZUP') subText = 'Teamsitzung';
+                             let styleClass = 'global-chip';
+                             if (globalEntry.subject === 'FÖA') styleClass += ' special-foea';
+                             else if (['WPF', 'SPA', 'TUE'].includes(globalEntry.subject)) styleClass += ' special-wpf';
+                             else if (globalEntry.subject === 'ZUP') styleClass += ' special-zup';
+                             cellContent = `<div class="print-cell-content ${styleClass}"><span class="preview-subject">${globalEntry.subject}</span><span class="preview-class">${subText}</span></div>`;
+                        } else if (selectedEntries.length > 0) {
+                            const e = selectedEntries[0];
+                            cellContent = `<div class="print-cell-content ${e.colorClass}"><span class="preview-subject">${e.subject}</span><span class="preview-class">${e.className}</span></div>`;
+                        }
+                        html += `<td>${cellContent}</td>`;
+                    }
+                    html += `</tr>`;
+                }
+            });
+            html += '</tbody></table>';
+            document.getElementById('printPreviewContent').innerHTML = html;
+            document.getElementById('printPreviewModal').classList.add('show');
+        }
+
+        // --- NEW STATS POSITION LOGIC ---
+        function toggleStatsPosition() {
+            const stats = document.getElementById('statsFooter');
+            const content = document.getElementById('liveStatsContent'); // Get content div
+            const targetHours = document.getElementById('targetHoursSection');
+            const aside = document.querySelector('aside');
+            const arrow = document.getElementById('statsPositionArrow');
+
+            if (stats.dataset.position === 'top') {
+                stats.dataset.position = 'bottom';
+                stats.className = "p-3 bg-slate-50 border-t border-gray-200 mt-auto"; 
+                aside.appendChild(stats);
+                // Reset height
+                content.classList.remove('max-h-[60vh]');
+                content.classList.add('max-h-32');
+                
+                if(arrow) { arrow.classList.remove('rotate-180'); arrow.classList.add('fa-chevron-up'); arrow.classList.remove('fa-chevron-down'); }
+            } else {
+                stats.dataset.position = 'top';
+                stats.className = "bg-blue-50 border border-blue-100 rounded-lg p-2 mb-4 shrink-0 transition-all duration-300 shadow-sm";
+                targetHours.insertAdjacentElement('afterend', stats);
+                // Expand height
+                content.classList.remove('max-h-32');
+                content.classList.add('max-h-[60vh]');
+                
+                if(arrow) { arrow.classList.add('rotate-180'); arrow.classList.remove('fa-chevron-up'); arrow.classList.add('fa-chevron-down'); }
+            }
+        }
+
+        // --- TOUR LOGIC ---
+        let currentTourStep = 0;
+        const tourSteps = [
+            { targetId: null, title: "Willkommen beim SopädStundenplaner!", text: "Dieses Tool beherrscht zwei Dinge: 1. Das manuelle Erstellen von Stundenplänen. 2. Die automatische Erstellung und Kombination von mehreren Stundenplänen." },
+            { targetId: "personalDataSection", title: "1. Wer bist du?", text: "Trage oben deinen Namen, Jahrgang und das Schuljahr ein. Das erscheint später auf dem Ausdruck." },
+            { targetId: "classInputSection", title: "2. Klassen anlegen", text: "Erstelle hier nacheinander alle deine Klassen (z.B. 6a, 6b...) und bestätige jeweils mit Enter." },
+            { targetId: "subjectSection", title: "3. Manuelles Ausfüllen", text: "Wähle oben eine Klasse aus. Tippe dann hier links ein Fach an. Der Planer beginnt bei Mo-1.Std und springt automatisch weiter. Fertig? Dann wähle die nächste Klasse." },
+            { targetId: "mainTimetable", title: "4. Strategie-Wahl", text: "Jetzt entscheidest du: Entweder klickst du deine Fächer im Plan an, um sie manuell zu belegen (sie werden farbig). Oder... jetzt kommt die Magie: Du lässt Auto-Verteilen." },
+            { targetId: "targetHoursSection", title: "5. Vorbereitung Auto", text: "Bevor du 'Auto' drückst: 1. Lege dein Stunden-Ziel fest (gelbes Feld). 2. Nutze 'Sperren' (⛔), um Zeiten zu blockieren, an denen du nicht kannst." },
+            { targetId: "btnMagicSettings", title: "6. Fächer-Pool", text: "Hinter dem Zahnrad verbirgt sich die Fächerauswahl. Hier kannst du neue Fächer anlegen oder nicht benötigte Fächer ausblenden." },
+            { targetId: "btnRules", title: "7. Regeln", text: "Im Button daneben (Regeln) kannst du Zwänge definieren: Z.B. 'Ich muss in der 6e unbedingt 2x Mathe machen'." },
+            { targetId: "mainTimetable", title: "8. Pinnen", text: "Auch im Plan selbst kannst du steuern: Klicke ein Fach an, um es zu 'Pinnen' (Grüner Rahmen). Diese Stunde bleibt dann garantiert erhalten." },
+            { targetId: "autoButtonSection", title: "9. Auto-Start", text: "Klicke auf 'Auto'. Dein persönlicher Plan wird nun nach deinen Wünschen und Regeln optimal berechnet." },
+            { targetId: "statsFooter", title: "10. Verteilung", text: "Prüfe unter 'Verteilung', wie fair die Stunden gewichtet sind. Manuelle Änderungen aktualisieren diese Anzeige sofort." },
+            { targetId: "demoDataBtn", title: "11. Demo-Modus", text: "Noch unsicher? Klicke auf 'Demo', um den Plan einmal komplett mit Testdaten zu füllen." },
+            { targetId: "toolbarActions", title: "12. Toolbar & Hilfe", text: "Hier oben findest du Speichern, Drucken und die Hilfe (?)." }
+        ];
+
+        function startTour() { currentTourStep = 0; document.getElementById('tourOverlay').classList.add('active'); showTourStep(); }
+        function endTour() { document.getElementById('tourOverlay').classList.remove('active'); const dontShow = document.getElementById('tourDontShowAgain').checked; if(dontShow) localStorage.setItem('stundenplan_tour_seen', 'true'); }
+        function nextTourStep() { currentTourStep++; if(currentTourStep >= tourSteps.length) { endTour(); } else { showTourStep(); } }
+        function showTourStep() {
+            const step = tourSteps[currentTourStep];
+            const tooltip = document.getElementById('tourTooltip');
+            const spotlight = document.getElementById('tourSpotlight');
+            document.getElementById('tourTitle').textContent = step.title;
+            document.getElementById('tourText').textContent = step.text;
+            tooltip.classList.remove('visible'); 
+            if (step.targetId) {
+                const target = document.getElementById(step.targetId);
+                const rect = target.getBoundingClientRect();
+                spotlight.style.width = (rect.width + 10) + 'px'; spotlight.style.height = (rect.height + 10) + 'px'; spotlight.style.top = (rect.top - 5) + 'px'; spotlight.style.left = (rect.left - 5) + 'px'; spotlight.style.opacity = '1';
+                const tooltipWidth = 340; const padding = 10;
+                let left = rect.right + 20; let top = rect.top;
+                if (left + tooltipWidth > window.innerWidth) { left = rect.left - tooltipWidth - 20; }
+                if (left < padding) { left = rect.left + (rect.width / 2) - (tooltipWidth / 2); top = rect.bottom + 20; }
+                if (top + 200 > window.innerHeight) { top = Math.max(padding, window.innerHeight - 250); }
+                left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
+                tooltip.style.top = top + 'px'; tooltip.style.left = left + 'px';
+            } else {
+                spotlight.style.width = '0px'; spotlight.style.height = '0px'; spotlight.style.opacity = '0'; spotlight.style.top = '50%'; spotlight.style.left = '50%';
+                tooltip.style.top = '50%'; tooltip.style.left = '50%'; tooltip.style.transform = 'translate(-50%, -50%)';
+            }
+            if(step.targetId) tooltip.style.transform = 'none';
+            setTimeout(() => tooltip.classList.add('visible'), 50);
+        }
+
+        function exportToFile() {
+            const data = { classes, timetableData, blockedSlots: Array.from(blockedSlots), magicRules, magicSubjectKeys, teacherHours: document.getElementById('teacherHours').value, teacherName: document.getElementById('teacherNameInput').value, gradeLevel: document.getElementById('gradeLevelInput').value, schoolYear: document.getElementById('schoolYearInput').value, allSubjects, hiddenSubjects: Array.from(hiddenSubjects) };
+            const json = JSON.stringify(data, null, 2); const blob = new Blob([json], { type: "application/json" }); const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `stundenplan_${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); showToast("Datei heruntergeladen!");
+        }
+        function importFromFile(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    classes = data.classes || []; timetableData = data.timetableData || {}; blockedSlots = new Set(data.blockedSlots || []); magicRules = data.magicRules || []; magicSubjectKeys = data.magicSubjectKeys || ["MAT", "DEU", "ENG"];
+                    if(data.teacherHours) document.getElementById('teacherHours').value = data.teacherHours; if(data.teacherName) document.getElementById('teacherNameInput').value = data.teacherName; if(data.gradeLevel) document.getElementById('gradeLevelInput').value = data.gradeLevel; if(data.schoolYear) document.getElementById('schoolYearInput').value = data.schoolYear;
+                    if(data.allSubjects) allSubjects = data.allSubjects; if(data.hiddenSubjects) hiddenSubjects = new Set(data.hiddenSubjects);
+                    ensureZUP(); // Ensure ZUP is present after import
+                    renderClasses(); if (classes.length > 0) selectClass(0); else selectedClassIndex = -1; renderTimetable(); updateLiveStats(); showToast("Plan importiert!");
+                } catch (err) { showToast("Fehler beim Import: " + err.message, true); } input.value = '';
+            }; reader.readAsText(file);
+        }
+
+        // --- SCAN IMPORT LOGIC ---
+        function handleScanUpload(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgUrl = e.target.result;
+                scanImage = imgUrl; // Store global
+                
+                // NO MORE background-image
+                // Render the image into the DOM via renderTimetable() which calls renderScanImage()
+                
+                document.body.classList.add('scan-active');
+                document.getElementById('scanControls').classList.add('show');
+                document.getElementById('reopenScanBtn').classList.add('hidden');
+                
+                // Trigger render to show image
+                renderTimetable();
+                
+                // ENABLE ADJUSTMENT MODE & DRAG
+                enableScanAdjustmentMode();
+                
+                showToast("Bild geladen. Verschiebe es nun!", false);
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        }
+
+        function enableScanAdjustmentMode() {
+            isScanAdjustmentMode = true;
+            document.body.classList.add('scan-adjust-mode'); // Helps with cursor
+            document.getElementById('timetableBody').style.overflow = 'hidden'; // Stop scrolling
+            setupScanDragListeners();
+        }
+
+        function disableScanAdjustmentMode() {
+            isScanAdjustmentMode = false;
+            document.body.classList.remove('scan-adjust-mode');
+            document.getElementById('timetableBody').style.overflow = 'auto'; // Re-enable scrolling
+            // Listeners are always there but guarded by flag
+        }
+
+        // --- DRAG & PINCH LOGIC FOR SCAN BACKGROUND ---
+        function setupScanDragListeners() {
+            // Already handled in init()
+        }
+
+        function getTouchDistance(e) {
+            return Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+        }
+
+        function handleDragStart(e) {
+            if (!isScanAdjustmentMode) return;
+            
+            // Check for Pinch (2 fingers)
+            if (e.touches && e.touches.length === 2) {
+                isPinching = true;
+                isDraggingScan = false; // Prioritize pinch
+                pinchStartDist = getTouchDistance(e);
+                pinchStartZoom = parseInt(scanSettings.zoom);
+                e.preventDefault();
+                return;
+            }
+
+            // Normal Drag (1 finger/mouse)
+            isDraggingScan = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            dragStartX = clientX;
+            dragStartY = clientY;
+            initialScanX = parseInt(scanSettings.x) || 0;
+            initialScanY = parseInt(scanSettings.y) || 0;
+            
+            // Prevent default only on touch to stop scrolling/refresh, mouse is fine usually
+            if (e.touches) e.preventDefault(); 
+        }
+
+        function handleDragMove(e) {
+            if (!isScanAdjustmentMode) return;
+
+            // Handle Pinch
+            if (isPinching && e.touches && e.touches.length === 2) {
+                const newDist = getTouchDistance(e);
+                const scale = newDist / pinchStartDist;
+                let newZoom = pinchStartZoom * scale;
+                
+                // Clamp Zoom
+                newZoom = Math.min(Math.max(newZoom, 20), 500);
+                
+                updateScanZoom(newZoom);
+                document.getElementById('scanZoomSlider').value = newZoom;
+                
+                e.preventDefault();
+                return;
+            }
+
+            // Handle Drag
+            if (!isDraggingScan) return;
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const dx = clientX - dragStartX;
+            const dy = clientY - dragStartY;
+            
+            let newX = initialScanX + dx;
+            let newY = initialScanY + dy;
+            
+            // Update values directly
+            updateScanX(newX);
+            updateScanY(newY);
+            
+            // Sync sliders
+            document.getElementById('scanXSlider').value = newX;
+            document.getElementById('scanYSlider').value = newY;
+            
+            e.preventDefault(); 
+        }
+
+        function handleDragEnd(e) {
+            isDraggingScan = false;
+            // If fingers dropped below 2, stop pinching
+            if (e.touches && e.touches.length < 2) {
+                isPinching = false;
+            }
+        }
+
+        function updateScanOpacity(val) {
+            const cells = document.querySelectorAll('.print-lesson, .print-break, .time-col');
+            const opacity = val / 100;
+            cells.forEach(c => c.style.backgroundColor = `rgba(255,255,255,${opacity})`);
+        }
+
+        function updateScanZoom(val) {
+            scanSettings.zoom = val;
+            updateScanTransform();
+        }
+
+        function updateScanX(val) {
+            scanSettings.x = parseInt(val);
+            updateScanTransform();
+        }
+
+        function updateScanY(val) {
+            scanSettings.y = parseInt(val);
+            updateScanTransform();
+        }
+        
+        function updateScanRotation(val) {
+            scanSettings.rotation = parseInt(val);
+            updateScanTransform();
+        }
+        
+        function updateScanTransform(imgEl = null) {
+            const img = imgEl || document.getElementById('scanImageLayer');
+            if (!img) return;
+            
+            // Logic: Translate to center first (-50%), then user translate, then rotate, then scale
+            // CSS transforms apply from right to left in matrix math logic, but syntax wise:
+            // transform: t1 t2 t3 -> applies t1 then t2 then t3
+            // To rotate around center of image: translate(-50%, -50%) centers origin.
+            // Then user translation.
+            
+            // CSS: transform: translate(-50%, -50%) translate(X, Y) rotate(R) scale(S);
+            img.style.transform = `translate(-50%, -50%) translate(${scanSettings.x}px, ${scanSettings.y}px) rotate(${scanSettings.rotation}deg) scale(${scanSettings.zoom / 100})`;
+        }
+        
+        function finishScanAdjustment() {
+             document.getElementById('scanControls').classList.remove('show');
+             document.getElementById('reopenScanBtn').classList.remove('hidden');
+             disableScanAdjustmentMode();
+             showToast("Fertig! Tippe jetzt Fächer ein.");
+        }
+        
+        function reopenScanAdjustment() {
+             document.getElementById('scanControls').classList.add('show');
+             document.getElementById('reopenScanBtn').classList.add('hidden');
+             enableScanAdjustmentMode();
+        }
+        
+        function removeScan() {
+             document.body.classList.remove('scan-active');
+             document.getElementById('scanControls').classList.remove('show');
+             document.getElementById('reopenScanBtn').classList.add('hidden');
+             disableScanAdjustmentMode();
+             scanImage = null;
+             renderTimetable(); // Re-render to remove image
+             // Reset cell styles
+             const cells = document.querySelectorAll('.print-lesson, .print-break, .time-col');
+             cells.forEach(c => c.style.backgroundColor = '');
+             showToast("Hintergrundbild entfernt");
+        }
+
+        function updateRulesFromPin(className, subject) {
+            let pinCount = 0; for (const key in timetableData) { timetableData[key].forEach(e => { if (e.isManual && e.className === className && e.subject === subject) pinCount++; }); }
+            let ruleIdx = magicRules.findIndex(r => r.className === className && r.subject === subject);
+            if (pinCount > 0) { if (ruleIdx === -1) { magicRules.push({ className: className, subject: subject, hours: pinCount }); showToast(`Regel erstellt: ${className} ${subject} Min: ${pinCount}`); } else { if (magicRules[ruleIdx].hours !== pinCount) { magicRules[ruleIdx].hours = pinCount; showToast(`Regel angepasst: ${className} ${subject} Min: ${pinCount}`); } } } else { if (ruleIdx !== -1) { magicRules.splice(ruleIdx, 1); showToast(`Regel gelöscht: ${className} ${subject}`); } }
+            if(document.getElementById('rulesModal').classList.contains('show')) renderRuleList();
+        }
+
+        function openRulesModal() { disableBlockingMode(); updateHeaderColor('neutral'); if (classes.length === 0) { showToast("Bitte erst Klassen erstellen!", true); return; } updateRuleFormOptions(); renderRuleList(); document.getElementById('rulesModal').classList.add('show'); }
+        function closeRulesModal() { document.getElementById('rulesModal').classList.remove('show'); }
+        function updateRuleFormOptions() { 
+            const classSelect = document.getElementById('ruleClassSelect'); 
+            classSelect.innerHTML = classes.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); 
+            
+            // Check for WPF/FÖA entries to show "Kurs" option
+            const hasSpecialCourses = Object.values(timetableData).some(entries => 
+                entries.some(e => ['WPF', 'FÖA'].includes(e.subject))
+            );
+            if (hasSpecialCourses) {
+                classSelect.innerHTML += '<option value="Kurs">Kurs</option>';
+            }
+
+            if(selectedClassIndex > -1 && classes[selectedClassIndex]) { classSelect.value = classes[selectedClassIndex].name; } 
+            classSelect.onchange = updateRuleSubjectOptions; 
+            updateRuleSubjectOptions(); 
+        }
+        function updateRuleSubjectOptions() {
+            const classSelect = document.getElementById('ruleClassSelect'); 
+            const subjectSelect = document.getElementById('ruleSubjectSelect'); 
+            const className = classSelect.value;
+            
+            if(!className) { subjectSelect.innerHTML = ''; return; }
+            
+            if (className === 'Kurs') {
+                const courseSubjects = new Set();
+                Object.values(timetableData).forEach(entries => {
+                    entries.forEach(e => {
+                        if (['WPF', 'FÖA'].includes(e.subject)) {
+                            courseSubjects.add(e.subject);
+                        }
+                    });
+                });
+                const sorted = Array.from(courseSubjects).sort();
+                if(sorted.length === 0) { 
+                    subjectSelect.innerHTML = '<option value="">(Leer)</option>'; 
+                } else { 
+                    subjectSelect.innerHTML = sorted.map(s => `<option value="${s}">${s}</option>`).join(''); 
+                }
+                return;
+            }
+
+            const usedSubjects = new Set(); for(const key in timetableData) { timetableData[key].forEach(entry => { if(entry.className === className && entry.subject !== '---') { usedSubjects.add(entry.subject); } }); }
+            const sorted = Array.from(usedSubjects).sort();
+            if(sorted.length === 0) { subjectSelect.innerHTML = '<option value="">(Keine Fächer im Plan)</option>'; } else { subjectSelect.innerHTML = sorted.map(s => `<option value="${s}">${s}</option>`).join(''); }
+        }
+        function addRule() { const c = document.getElementById('ruleClassSelect').value; const s = document.getElementById('ruleSubjectSelect').value; const h = parseInt(document.getElementById('ruleCountInput').value); if (!c || !s || !h) return; const existingIdx = magicRules.findIndex(r => r.className === c && r.subject === s); if (existingIdx > -1) magicRules[existingIdx].hours = h; else magicRules.push({ className: c, subject: s, hours: h }); renderRuleList(); }
+        function deleteRule(index) { magicRules.splice(index, 1); renderRuleList(); }
+        function renderRuleList() { const list = document.getElementById('ruleList'); list.innerHTML = ''; if (magicRules.length === 0) { list.innerHTML = '<div class="text-center text-gray-400 italic text-sm py-4">Keine Regeln definiert.</div>'; return; } magicRules.forEach((r, idx) => { const div = document.createElement('div'); div.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-200 shadow-sm"; div.innerHTML = `<div class="flex items-center gap-2 text-sm"><span class="font-bold text-gray-800 bg-gray-100 px-2 rounded">${r.className}</span><span class="text-gray-600">${r.subject}</span><span class="text-blue-600 font-bold ml-2">Min: ${r.hours} Std.</span></div><button onclick="deleteRule(${idx})" class="text-red-400 hover:text-red-600 px-2"><i class="fas fa-trash"></i></button>`; list.appendChild(div); }); }
+
+        function handleNewSubjectEnter(e) { if(e.key === 'Enter') addNewSubject(); }
+        function addNewSubject() { const input = document.getElementById('newSubjectInput'); const val = input.value.trim().toUpperCase(); if(!val) return; if(allSubjects.includes(val)) { showToast("Fach existiert bereits!", true); return; } allSubjects.push(val); input.value = ''; renderMagicSettingsList(); renderSubjects(); showToast("Fach hinzugefügt: " + val); }
+        function filterMagicSettings(query) { renderMagicSettingsList(query); }
+        function deleteCustomSubject(subj) { if(confirm(`Fach "${subj}" wirklich löschen?`)) { allSubjects = allSubjects.filter(s => s !== subj); hiddenSubjects.delete(subj); magicSubjectKeys = magicSubjectKeys.filter(s => s !== subj); const currentFilter = document.getElementById('newSubjectInput').value; renderMagicSettingsList(currentFilter); renderSubjects(); } }
+        function toggleSubjectVisibility(subj) { if(hiddenSubjects.has(subj)) { hiddenSubjects.delete(subj); } else { hiddenSubjects.add(subj); } const currentFilter = document.getElementById('newSubjectInput').value; renderMagicSettingsList(currentFilter); renderSubjects(); }
+        function deselectAllMagic() { magicSubjectKeys = []; const currentFilter = document.getElementById('newSubjectInput').value; renderMagicSettingsList(currentFilter); showToast("Alle Auto-Haken entfernt."); }
+        function showAllSubjects() { hiddenSubjects.clear(); const currentFilter = document.getElementById('newSubjectInput').value; renderMagicSettingsList(currentFilter); renderSubjects(); showToast("Alle Fächer sichtbar."); }
+        function hideSubject(e, subj) { e.preventDefault(); if(subj === '---') return; hiddenSubjects.add(subj); renderSubjects(); showToast(`${subj} ausgeblendet (wiederherstellen über Zahnrad)`); }
+        function openMagicSettings() { disableBlockingMode(); updateHeaderColor('neutral'); document.getElementById('magicSettingsModal').classList.add('show'); document.getElementById('newSubjectInput').value = ''; document.getElementById('newSubjectInput').focus(); renderMagicSettingsList(); }
+        function isSubjectVisible(subj) { return !hiddenSubjects.has(subj); }
+        function renderMagicSettingsList(filterText = '') {
+            const list = document.getElementById('magicSettingsList'); list.innerHTML = ''; const upperFilter = filterText.toUpperCase().trim();
+            allSubjects.filter(s => s !== '---').forEach(subj => { 
+                if(upperFilter && !subj.includes(upperFilter)) return;
+                const isChecked = magicSubjectKeys.includes(subj); const isVisible = isSubjectVisible(subj);
+                let rowClass = "flex justify-between items-center p-2 rounded hover:bg-gray-50 border-b border-gray-100 last:border-0"; if (!isVisible) rowClass += " bg-gray-100 opacity-75"; 
+                const div = document.createElement('div'); div.className = rowClass;
+                const checkStyle = isVisible ? '' : 'opacity-20 pointer-events-none';
+                const magicCheck = `<input type="checkbox" onchange="toggleMagicKey('${subj}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500 border-gray-300 ${checkStyle}">`;
+                const visIcon = isVisible ? 'fa-eye text-gray-600' : 'fa-eye-slash text-gray-400';
+                const visBtn = `<button onclick="toggleSubjectVisibility('${subj}')" class="w-6 text-center hover:bg-gray-200 rounded p-0.5"><i class="fas ${visIcon}"></i></button>`;
+                const deleteBtn = `<button onclick="deleteCustomSubject('${subj}')" class="text-gray-300 hover:text-red-500 ml-2 w-4"><i class="fas fa-trash-alt text-xs"></i></button>`;
+                div.innerHTML = `<span class="text-sm font-medium ${!isVisible ? 'text-gray-500 line-through' : 'text-gray-700'}">${subj}</span><div class="flex items-center gap-4">${visBtn}${magicCheck}${deleteBtn}</div>`; list.appendChild(div); 
+            }); 
+            if(list.children.length === 0 && filterText) { list.innerHTML = `<div class="text-center text-gray-400 text-xs py-4">"${filterText}" nicht gefunden.<br>Drücke <b>+</b> zum Erstellen.</div>`; }
+        }
+        function toggleMagicKey(subj) { if(magicSubjectKeys.includes(subj)) { magicSubjectKeys = magicSubjectKeys.filter(s => s !== subj); } else { magicSubjectKeys.push(subj); } }
+        function saveMagicSettings() { closeMagicSettings(); showToast("Einstellungen übernommen."); }
+        function closeMagicSettings() { document.getElementById('magicSettingsModal').classList.remove('show'); }
+        
+        function generateStatsHTML(targetHours) {
+            let currentAssigned = 0; let classCounts = {}; let classSubjectStats = {}; let globalCounts = {};
+            classes.forEach(c => { classCounts[c.name] = 0; classSubjectStats[c.name] = {}; });
+            for (const key in timetableData) {
+                timetableData[key].forEach(entry => {
+                    if (entry.isMagicSelected || entry.isManual) {
+                        currentAssigned++;
+                        if (GLOBAL_SUBJECTS.includes(entry.subject)) { if (!globalCounts[entry.subject]) globalCounts[entry.subject] = 0; globalCounts[entry.subject]++; } 
+                        else if (classCounts[entry.className] !== undefined) { classCounts[entry.className]++; if (!classSubjectStats[entry.className][entry.subject]) classSubjectStats[entry.className][entry.subject] = 0; classSubjectStats[entry.className][entry.subject]++; }
+                    }
+                });
+            }
+            let html = '';
+            if (Object.keys(globalCounts).length > 0) { html += `<div class="mb-3 pb-2 border-b border-gray-200"><h4 class="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-1">Kurse</h4><div class="flex flex-wrap gap-1">`; for (const subj in globalCounts) { html += `<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold flex items-center">${globalCounts[subj]}x ${subj} <i class="fas fa-users ml-1 opacity-70"></i></span>`; } html += `</div></div>`; }
+            html += `<ul class="space-y-2">`;
+            let hasClassData = false;
+            classes.forEach(c => {
+                const count = classCounts[c.name];
+                if (count > 0) {
+                    hasClassData = true; const subjects = classSubjectStats[c.name]; let subjectParts = [];
+                    for(const subj in subjects) { subjectParts.push(`<span class="bg-gray-100 px-1 py-0.5 rounded text-gray-700 border border-gray-200 text-[10px]">${subjects[subj]}x ${subj}</span>`); }
+                    html += `<li class="border-b border-gray-100 pb-1 last:border-0 last:pb-0"><div class="flex justify-between items-center mb-0.5"><div class="font-bold text-gray-800 text-xs flex items-center"><span class="w-2 h-2 rounded-full mr-1.5 ${c.colorClass.split(' ')[0]}"></span>${c.name}</div><span class="font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded text-[10px]">${count} Std.</span></div><div class="flex flex-wrap gap-1 ml-4">${subjectParts.join('')}</div></li>`;
+                }
+            });
+            if (!hasClassData && Object.keys(globalCounts).length === 0) html += '<li class="text-gray-400 italic text-center py-2 text-xs">Keine Stunden zugewiesen.</li>';
+            html += '</ul>';
+            return { html, currentAssigned };
+        }
+
+        function updateLiveStats() {
+            const targetHours = parseInt(document.getElementById('teacherHours').value) || 27;
+            const stats = generateStatsHTML(targetHours);
+            document.getElementById('totalAssignedBadge').textContent = `${stats.currentAssigned}/${targetHours}`;
+            document.getElementById('liveStatsContent').innerHTML = stats.html;
+            lastResultData = { counts: {}, stats: {}, total: stats.currentAssigned, target: targetHours, warning: '' };
+        }
+
+        function showResult(counts, statsObj, total, target, warning = '') {
+             updateLiveStats();
+             let html = warning;
+             html += `<div class="bg-blue-50 border border-blue-100 p-3 rounded mb-4"><div class="text-sm text-blue-800">Gesamtziel: <span class="font-bold">${target} Std.</span></div><div class="text-lg font-bold text-blue-900">Zugewiesen: ${total} Std.</div></div>`;
+             html += document.getElementById('liveStatsContent').innerHTML;
+             document.getElementById('resultContent').innerHTML = html;
+             document.getElementById('resultModal').classList.add('show');
+        }
+
+        function closeResult() { 
+            document.getElementById('resultModal').classList.remove('show');
+            // Auto move stats to top on close if not already top
+            const stats = document.getElementById('statsFooter');
+            if(stats.dataset.position !== 'top') {
+                toggleStatsPosition();
+            }
+        }
+        
+        function reopenResult() { 
+            disableBlockingMode();
+            updateHeaderColor('neutral');
+            showResult(null, null, document.getElementById('totalAssignedBadge').textContent.split('/')[0], document.getElementById('teacherHours').value); 
+        }
+        
+        function toggleBlockingMode() { 
+            isBlockingMode = !isBlockingMode; 
+            const btn = document.getElementById('blockToggleBtn'); 
+            if (isBlockingMode) { 
+                updateHeaderColor('neutral'); 
+                btn.classList.remove('bg-white', 'text-red-500'); btn.classList.add('bg-red-500', 'text-white'); btn.innerHTML = `<i class="fas fa-check"></i>`; document.body.classList.add('blocking-active'); 
+            } else { 
+                btn.classList.remove('bg-red-500', 'text-white'); btn.classList.add('bg-white', 'text-red-500'); btn.innerHTML = `<i class="fas fa-ban"></i>`; document.body.classList.remove('blocking-active'); 
+            } 
+        }
+        
+        function disableBlockingMode() { if (isBlockingMode) { toggleBlockingMode(); } }
+        function clearMagicSelection() { for (const key in timetableData) { timetableData[key].forEach(entry => { if (!entry.isManual) entry.isMagicSelected = false; }); } renderTimetable(); updateLiveStats(); }
+        
+        function runMagicAlgorithm() {
+            disableBlockingMode(); clearMagicSelection();
+            const targetHours = parseInt(document.getElementById('teacherHours').value) || 27; let currentAssigned = 0; const isMainSubject = (subj) => magicSubjectKeys.includes(subj); let teacherGrid = Array(5).fill().map(() => Array(10).fill(false)); let potentialSlotsCount = 0; let blockedMissesCount = 0;
+            for (const key in timetableData) {
+                 const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                timetableData[key].forEach(entry => {
+                    if (entry.isManual) { if (!teacherGrid[day][period]) { teacherGrid[day][period] = true; currentAssigned++; } }
+                    const isRuleSubject = magicRules.some(r => r.className === entry.className && r.subject === entry.subject);
+                    if (isMainSubject(entry.subject) || isRuleSubject) { potentialSlotsCount++; if (blockedSlots.has(key)) blockedMissesCount++; }
+                });
+            }
+            magicRules.forEach(rule => {
+                let ruleAlreadyMet = 0; for (const key in timetableData) { timetableData[key].forEach(entry => { if (entry.isManual && entry.className === rule.className && entry.subject === rule.subject) ruleAlreadyMet++; }); }
+                let needed = rule.hours - ruleAlreadyMet; if (needed <= 0) return;
+                let ruleAssigned = 0; let ruleCandidates = [];
+                for (const key in timetableData) {
+                    if (blockedSlots.has(key)) continue; const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                    if (teacherGrid[day][period]) continue;
+                    timetableData[key].forEach((entry, index) => { if (entry.className === rule.className && entry.subject === rule.subject && !entry.isManual && !entry.isMagicSelected) { ruleCandidates.push({ key, day, period, entryIndex: index }); } });
+                }
+                ruleCandidates.sort((a,b) => (teacherGrid[a.day][a.period-1] ? -1 : 1)); 
+                for(let k=0; k<needed; k++) { if(k < ruleCandidates.length && currentAssigned < targetHours) { const cand = ruleCandidates[k]; timetableData[cand.key][cand.entryIndex].isMagicSelected = true; teacherGrid[cand.day][cand.period] = true; currentAssigned++; } }
+            });
+            let classCounts = {}; classes.forEach(c => { classCounts[c.name] = 0; });
+            for (const key in timetableData) { timetableData[key].forEach(entry => { if ((entry.isMagicSelected || entry.isManual) && classCounts[entry.className] !== undefined && !GLOBAL_SUBJECTS.includes(entry.subject)) { classCounts[entry.className]++; } }); }
+            while (currentAssigned < targetHours) {
+                let bestMove = null; let bestScore = -999999; let currentMin = 999; let activeClasses = new Set();
+                for (const key in timetableData) {
+                    if (blockedSlots.has(key)) continue; const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                    if (teacherGrid[day][period]) continue;
+                    timetableData[key].forEach(e => { if (isMainSubject(e.subject) && !e.isManual && !e.isMagicSelected) { if(!GLOBAL_SUBJECTS.includes(e.subject)) activeClasses.add(e.className); } });
+                }
+                if (activeClasses.size > 0) { activeClasses.forEach(clsName => { const h = classCounts[clsName] || 0; if (h < currentMin) currentMin = h; }); }
+                for (const key in timetableData) {
+                    if (blockedSlots.has(key)) continue; const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                    if (teacherGrid[day][period]) continue;
+                    timetableData[key].forEach((entry, index) => {
+                        if (isMainSubject(entry.subject) && !entry.isManual && !entry.isMagicSelected) {
+                            let score = 0;
+                            if(GLOBAL_SUBJECTS.includes(entry.subject)) { score += 5000; } else { const currentHours = classCounts[entry.className] || 0; if (currentHours === currentMin) score += 10000; else if (currentHours === currentMin + 1) score += 1000; else score -= 1000; }
+                            const prevBusy = teacherGrid[day][period - 1]; const nextBusy = teacherGrid[day][period + 1]; if (prevBusy) score += 50; if (nextBusy) score += 50;
+                            score += Math.random() * 10; if (score > bestScore) { bestScore = score; bestMove = { key, day, period, index, className: entry.className, subject: entry.subject }; }
+                        }
+                    });
+                }
+                if (!bestMove) break;
+                timetableData[bestMove.key][bestMove.index].isMagicSelected = true; teacherGrid[bestMove.day][bestMove.period] = true;
+                if(!GLOBAL_SUBJECTS.includes(bestMove.subject)) { classCounts[bestMove.className]++; } currentAssigned++;
+            }
+            let iterations = 0;
+            while(iterations < 500) { 
+                let changesInLoop = false; let currentCounts = {}; classes.forEach(c => currentCounts[c.name] = 0);
+                for (const key in timetableData) { timetableData[key].forEach(e => { if ((e.isMagicSelected || e.isManual) && !GLOBAL_SUBJECTS.includes(e.subject)) currentCounts[e.className]++; }); }
+                let minH = 999, maxH = -1; let minClass = null, maxClass = null;
+                classes.forEach(c => { let h = currentCounts[c.name] || 0; if(h < minH) { minH = h; minClass = c.name; } if(h > maxH) { maxH = h; maxClass = c.name; } });
+                if ((maxH - minH) < 2) break; 
+                for(const key in timetableData) {
+                    if (changesInLoop) break; const [dStr, pStr] = key.split('-'); const day = parseInt(dStr.replace('d', '')); const period = parseInt(pStr.replace('p', ''));
+                    let richIndex = -1; let richClassName = null;
+                    timetableData[key].forEach((e, idx) => { if(e.isMagicSelected && !e.isManual && !GLOBAL_SUBJECTS.includes(e.subject) && isMainSubject(e.subject)) { if (currentCounts[e.className] > minH + 1) { richIndex = idx; richClassName = e.className; } } });
+                    if(richIndex !== -1) {
+                        let poorIndex = -1; let poorClassName = null;
+                        timetableData[key].forEach((e, idx) => { if(currentCounts[e.className] === minH && isMainSubject(e.subject) && !e.isMagicSelected && !e.isManual) { poorIndex = idx; poorClassName = e.className; } });
+                        if(poorIndex !== -1) { timetableData[key][richIndex].isMagicSelected = false; timetableData[key][poorIndex].isMagicSelected = true; changesInLoop = true; }
+                    }
+                }
+                if (!changesInLoop) break; iterations++;
+            }
+            let warning = ""; 
+            if (currentAssigned < targetHours) { 
+                const missing = targetHours - currentAssigned; 
+                warning = `<div class="bg-orange-50 border-l-4 border-orange-400 text-orange-800 p-2 mb-3 text-xs"><p class="font-bold mb-2"><i class="fas fa-info-circle mr-1"></i> Fast geschafft! Es fehlen noch ${missing} Stunden.</p>`;
+                if (potentialSlotsCount < targetHours) warning += `<p class="mb-1">Im aktuellen Plan gibt es leider nicht genügend Stunden für deine gewählten Fächer (nur ${potentialSlotsCount} verfügbar).</p>`;
+                else if (blockedMissesCount > 0) warning += `<p class="mb-1">Einige passende Stunden fallen leider genau in deine Sperrzeiten (⛔).</p>`;
+                else warning += `<p class="mb-1">Es gibt zwar Stunden, aber die finden oft gleichzeitig statt.</p>`;
+                warning += `</div>`;
+            }
+            renderTimetable(); updateLiveStats(); showResult(null, null, currentAssigned, targetHours, warning);
+        }
+
+        function renderClasses() {
+            const container = document.getElementById('classList'); container.innerHTML = ''; 
+            if (classes.length === 0) { container.innerHTML = '<span class="text-gray-400 text-sm italic self-center pl-2" id="noClassHint">Keine Klassen...</span>'; return; }
+            classes.forEach((c, idx) => {
+                const btn = document.createElement('div'); const isSelected = selectedClassIndex === idx;
+                let styleClass = `cursor-pointer flex items-center px-3 py-1 rounded border shadow-sm transition select-none ${c.colorClass} `;
+                if (isSelected) styleClass += `ring-2 ring-offset-1 ring-blue-500 font-bold transform scale-105 opacity-100`; else styleClass += `hover:opacity-100 opacity-60 border-gray-300`;
+                btn.className = styleClass; btn.onclick = () => selectClass(idx);
+                btn.innerHTML = `<span class="mr-2">${c.name}</span><i class="fas fa-times text-xs opacity-40 hover:opacity-100 hover:text-red-800" onclick="event.stopPropagation(); removeClass(${idx})"></i>`; container.appendChild(btn);
+            });
+        }
+        function updateSelectedClassDisplay() { const el = document.getElementById('selectedClassDisplay'); if (selectedClassIndex > -1) { const c = classes[selectedClassIndex]; el.innerHTML = `Aktiv: <span class="px-2 py-0.5 rounded ${c.colorClass} border text-xs font-bold">${c.name}</span>`; } else { el.innerHTML = ''; } }
+        
+        function renderSubjects() {
+            const grid = document.getElementById('subjectGrid'); grid.innerHTML = '';
+            allSubjects.forEach(sub => {
+                if(!isSubjectVisible(sub) && sub !== '---') return; 
+                const btn = document.createElement('button');
+                let fontSize = "text-sm"; if (sub.length > 5) fontSize = "text-xs"; if (sub.length > 10) fontSize = "text-[10px]";
+                btn.className = `subject-btn bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-1 rounded ${fontSize} shadow-sm truncate flex items-center justify-center`;
+                if (sub === '---') { btn.innerHTML = '<i class="fas fa-slash text-gray-400 rotate-90" style="font-size: 1.2em;"></i>'; btn.classList.add('border-gray-300', 'bg-gray-50'); } else { btn.textContent = sub; const color = subjectColors[sub]; if(color) { btn.style.borderLeftWidth = '4px'; btn.style.borderLeftColor = color; } }
+                btn.onclick = () => insertSubject(sub); btn.oncontextmenu = (e) => hideSubject(e, sub); grid.appendChild(btn);
+            });
+        }
+
+        function renderCellContent(cellElement, entries) {
+            cellElement.innerHTML = '';
+            const container = document.createElement('div'); container.className = `cell-wrapper flex flex-col gap-0.5 h-full w-full relative z-10`; 
+            if (blockedSlots.has(cellElement.id)) { const overlay = document.createElement('div'); overlay.className = 'blocked-overlay'; cellElement.appendChild(overlay); cellElement.classList.add('blocked-cell'); } else { cellElement.classList.remove('blocked-cell'); }
+            if (!entries || entries.length === 0) return;
+            const anySelected = entries.some(e => e.isMagicSelected || e.isManual);
+            const globalSelected = entries.find(e => (e.isMagicSelected || e.isManual) && GLOBAL_SUBJECTS.includes(e.subject));
+            if (globalSelected) {
+                 const allClassesString = classes.map(c => c.name).join(', ');
+                 const chip = document.createElement('div');
+                 let styleClass = 'global-chip';
+                 if (globalSelected.subject === 'FÖA') styleClass += ' special-foea';
+                 else if (['WPF', 'SPA', 'TUE'].includes(globalSelected.subject)) styleClass += ' special-wpf';
+                 else if (globalSelected.subject === 'ZUP') styleClass += ' special-zup';
+                 
+                 // Show "Teamsitzung" for ZUP, else list classes
+                 let subText = allClassesString;
+                 if (globalSelected.subject === 'ZUP') subText = 'Teamsitzung';
+                 
+                 chip.className = `entry-chip ${styleClass}`;
+                 chip.style.flex = "1";
+                 if(globalSelected.isManual) { chip.innerHTML = `<div class="magic-icon manual"><i class="fas fa-thumbtack"></i></div><span class="chip-subject">${globalSelected.subject}</span><span class="chip-class">${subText}</span>`; } else { chip.innerHTML = `<div class="magic-icon auto"><i class="fas fa-graduation-cap"></i></div><span class="chip-subject">${globalSelected.subject}</span><span class="chip-class">${subText}</span>`; }
+                 const idx = entries.indexOf(globalSelected);
+                 chip.onclick = (e) => { if (isBlockingMode || isScanAdjustmentMode) return; e.stopPropagation(); setCursor(parseInt(cellElement.id.split('-')[0].substring(1)), parseInt(cellElement.id.split('-')[1].substring(1))); };
+                 container.appendChild(chip);
+            } else {
+                entries.forEach((entry, idx) => {
+                    const chip = document.createElement('div'); 
+                    let magicClass = ''; let magicIcon = ''; 
+                    if (entry.isMagicSelected && !entry.isManual) { magicClass = 'magic-selected'; magicIcon = `<div class="magic-icon auto"><i class="fas fa-graduation-cap"></i></div>`; } else if (entry.isManual) { magicClass = 'manual-selected'; } else if (anySelected) { magicClass = 'dimmed'; }
+                    chip.className = `entry-chip ${entry.colorClass} ${magicClass}`;
+                    chip.style.flex = "1"; 
+                    let subjSize = 'text-[10px]'; if (entries.length === 1) subjSize = 'text-sm lg:text-base'; else if (entries.length > 4) subjSize = 'text-[9px]';
+                    const deleteBtn = document.createElement('div'); deleteBtn.className = 'chip-btn delete'; deleteBtn.innerHTML = '<i class="fas fa-times"></i>'; deleteBtn.onclick = (e) => { e.stopPropagation(); removeEntry(cellElement.id, idx); };
+                    const pinBtn = document.createElement('div'); pinBtn.className = `chip-btn pin ${entry.isManual ? 'active' : ''}`; pinBtn.innerHTML = '<i class="fas fa-thumbtack"></i>'; pinBtn.onclick = (e) => { e.stopPropagation(); toggleEntryManual(cellElement.id, idx); };
+                    let displaySubject = `<span class="${subjSize} font-bold uppercase truncate w-full text-center tracking-tight">${entry.subject}</span>`; if (entry.subject === '---') displaySubject = `<i class="fas fa-slash text-lg opacity-50 rotate-90"></i>`;
+                    chip.innerHTML = `${magicIcon}${displaySubject}<span class="text-[8px] leading-tight opacity-75 truncate w-full text-center font-medium">${entry.className}</span>`; 
+                    chip.appendChild(deleteBtn); chip.appendChild(pinBtn);
+                    chip.onclick = (e) => { if (isBlockingMode || isScanAdjustmentMode) return; e.stopPropagation(); const d = parseInt(cellElement.id.split('-')[0].substring(1)); const p = parseInt(cellElement.id.split('-')[1].substring(1)); setCursor(d, p); };
+                    container.appendChild(chip);
+                });
+            }
+            cellElement.appendChild(container);
+        }
+
+        function renderTimetable() {
+            const body = document.getElementById('timetableBody'); body.innerHTML = '';
+            
+            // --- NEW: RENDER SCAN IMAGE IF ACTIVE ---
+            if (scanImage) {
+                const img = document.createElement('img');
+                img.id = 'scanImageLayer';
+                img.src = scanImage;
+                // Important: transform logic is now applied to this element
+                updateScanTransform(img);
+                body.appendChild(img);
+            }
+            
+            scheduleStructure.forEach(slot => {
+                if (slot.type === 'break') {
+                    const row = document.createElement('div'); row.className = "print-break grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] bg-gray-200 text-gray-500 border-b border-gray-300"; row.innerHTML = `<div class="py-0.5 text-center text-[10px] flex flex-col justify-center font-mono border-r border-gray-300 bg-gray-300">${slot.start}<br>${slot.end}</div><div class="col-span-5 py-0.5 text-center font-bold tracking-widest text-[10px] uppercase flex items-center justify-center italic">${slot.label}</div>`; body.appendChild(row);
+                } else {
+                    const row = document.createElement('div'); row.className = "print-lesson grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] border-b border-gray-300 min-h-[80px]"; 
+                    const timeCell = document.createElement('div'); timeCell.className = "p-1 text-center text-xs flex flex-col justify-center font-mono border-r border-gray-300 bg-gray-50 font-medium"; timeCell.innerHTML = `<span class="text-base font-bold text-gray-700">${slot.id}.</span><span class="text-gray-500 text-[10px] mt-1">${slot.start}<br>${slot.end}</span>`; row.appendChild(timeCell);
+                    for (let day = 0; day < 5; day++) {
+                        const cellId = `d${day}-p${slot.id}`; const cell = document.createElement('div'); cell.id = cellId; 
+                        if (blockedSlots.has(cellId)) cell.className = `p-0.5 border-r border-gray-200 relative hover:bg-gray-50 cursor-pointer transition group blocked-cell`; else cell.className = `p-0.5 border-r border-gray-200 relative hover:bg-gray-50 cursor-pointer transition group`;
+                        cell.onclick = () => handleCellClick(day, slot.id); const entries = timetableData[cellId] || []; renderCellContent(cell, entries); row.appendChild(cell);
+                    }
+                    body.appendChild(row);
+                }
+            });
+        }
+
+        function handleClassEnter(e) { if (e.key === 'Enter') addClass(); }
+        function addClass() {
+            disableBlockingMode();
+            const input = document.getElementById('classInput'); const val = input.value.trim();
+            if (val && !classes.some(c => c.name === val)) {
+                const colorClass = getColorForClass(val); classes.push({ name: val, colorClass: colorClass });
+                if (val.startsWith('5') || val.startsWith('6')) { for (let d = 0; d < 5; d++) { const cellId = `d${d}-p5`; let entries = timetableData[cellId] || []; entries.push({ subject: "MEN", className: val, colorClass: colorClass, isMagicSelected: false, isManual: false }); timetableData[cellId] = entries; } renderTimetable(); } selectClass(classes.length - 1);
+            } input.value = ''; input.focus(); renderClasses();
+        }
+        function removeClass(index) { classes.splice(index, 1); if (selectedClassIndex >= index) selectedClassIndex = Math.max(0, selectedClassIndex - 1); if (classes.length === 0) { selectedClassIndex = -1; updateHeaderColor('neutral'); } renderClasses(); updateSelectedClassDisplay(); renderSubjects(); updateLiveStats(); }
+        function selectClass(index) { disableBlockingMode(); selectedClassIndex = index; updateHeaderColor('class', index); renderClasses(); updateSelectedClassDisplay(); renderSubjects(); }
+        
+        function updateHeaderColor(mode, classIndex) {
+            const header = document.getElementById('timetableHeader');
+            header.className = "grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr] text-center font-bold text-sm shadow-md z-10 flex-shrink-0 transition-colors duration-300";
+            if (mode === 'class' && classes[classIndex]) { header.className += " " + classes[classIndex].colorClass; } else { header.className += " bg-slate-800 text-white"; }
+        }
+
+        function handleCellClick(day, period) {
+            // IF SCAN ADJUSTMENT IS ACTIVE, BLOCK CLICKS
+            if (isScanAdjustmentMode) {
+                showToast("Bitte erst Bild fixieren!", true);
+                return;
+            }
+            
+            const cellId = `d${day}-p${period}`; 
+            if (isBlockingMode) { if (blockedSlots.has(cellId)) blockedSlots.delete(cellId); else { blockedSlots.add(cellId); if (timetableData[cellId]) timetableData[cellId].forEach(e => { e.isMagicSelected = false; e.isManual = false; }); } renderTimetable(); updateLiveStats(); return; } 
+            setCursor(day, period);
+        }
+        function setCursor(day, period) {
+            disableBlockingMode();
+            const oldId = `d${cursor.day}-p${cursor.period}`; const oldCell = document.getElementById(oldId); if (oldCell) oldCell.classList.remove('active-cell'); cursor = { day, period }; const newId = `d${day}-p${period}`; const newCell = document.getElementById(newId); if (newCell) { newCell.classList.add('active-cell'); newCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } updateCursorVisuals();
+        }
+        function updateCursorVisuals() { const newId = `d${cursor.day}-p${cursor.period}`; const newCell = document.getElementById(newId); if (newCell) { newCell.classList.add('active-cell'); newCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } }
+        
+        function removeEntry(cellId, index) { if (timetableData[cellId] && timetableData[cellId][index]) { const entry = timetableData[cellId][index]; updateRulesFromPin(entry.className, entry.subject); timetableData[cellId].splice(index, 1); if (timetableData[cellId].length === 0) delete timetableData[cellId]; renderTimetable(); updateLiveStats(); } }
+        function toggleEntryManual(cellId, index) { 
+            if (timetableData[cellId] && timetableData[cellId][index]) { 
+                const entries = timetableData[cellId];
+                const entry = entries[index]; 
+                
+                // Toggle state
+                const wasManual = entry.isManual;
+                entry.isManual = !wasManual; 
+                entry.isMagicSelected = false; 
+                
+                // Update rule for this entry
+                updateRulesFromPin(entry.className, entry.subject);
+                
+                // If we just pinned it, unpin others to ensure only one manual per cell
+                if (!wasManual) {
+                    entries.forEach((e, i) => {
+                        if (i !== index && e.isManual) {
+                            e.isManual = false;
+                            updateRulesFromPin(e.className, e.subject);
+                        }
+                    });
+                    showToast("Anderes Fach gelöst (nur 1 Pin/Feld)");
+                }
+                
+                renderTimetable(); 
+                updateLiveStats(); 
+            } 
+        }
+
+        function insertSubject(subject) {
+            if (isBlockingMode) { disableBlockingMode(); return; } 
+            if (selectedClassIndex === -1 && classes.length > 0) { showToast("Bitte erst Klasse wählen!", true); return; } 
+            const currentClass = selectedClassIndex > -1 ? classes[selectedClassIndex] : { name: '', colorClass: 'bg-gray-200 text-gray-800' }; 
+            const cellId = `d${cursor.day}-p${cursor.period}`; let entries = timetableData[cellId] || []; 
+            const existingIndex = entries.findIndex(e => e.className === currentClass.name);
+            if (existingIndex > -1) {
+                const oldSubject = entries[existingIndex].subject; entries[existingIndex].subject = subject;
+                if(entries[existingIndex].isManual) { updateRulesFromPin(currentClass.name, oldSubject); updateRulesFromPin(currentClass.name, subject); }
+            } else {
+                if (entries.length >= 8) { showToast("Max. 8 Fächer erreicht!", true); return; } 
+                entries.push({ subject: subject, className: currentClass.name, colorClass: currentClass.colorClass, isMagicSelected: false, isManual: false }); 
+            }
+            timetableData[cellId] = entries; renderCellContent(document.getElementById(cellId), entries); 
+            if (existingIndex === -1 && entries.length === 1) { advanceCursor(); }
+        }
+        function advanceCursor() { 
+            let nextPeriod = cursor.period + 1; 
+            let nextDay = cursor.day; 
+            
+            if (nextPeriod > 8) { 
+                nextPeriod = 1; 
+                nextDay++; 
+                if (nextDay > 4) nextDay = 0; 
+            } 
+            
+            // Skip ZUP (Wednesday=2, Period=5)
+            if (nextDay === 2 && nextPeriod === 5) {
+                nextPeriod++; // Skip to period 6
+                // Boundary check if period 5 was last (not applicable here as max is 8)
+            }
+            
+            setCursor(nextDay, nextPeriod); 
+        }
+        function clearActiveCell() { const cellId = `d${cursor.day}-p${cursor.period}`; delete timetableData[cellId]; document.getElementById(cellId).innerHTML = ''; }
+        
+        function fillTestSchedule() {
+            disableBlockingMode();
+            if (classes.length === 0) { const demoClasses = ['6a', '6b', '6c', '6d', '6e']; demoClasses.forEach((name, idx) => { classes.push({ name: name, colorClass: classColors[idx % classColors.length] }); }); renderClasses(); selectClass(0); }
+            timetableData = {}; blockedSlots = new Set(); lastResultData = null; magicRules = [];
+            try {
+                let allSlots = []; for(let d=0; d<5; d++) for(let p=1; p<=8; p++) allSlots.push(`d${d}-p${p}`);
+                const freeIds = ['d4-p7', 'd4-p8']; let validSlots = allSlots.filter(id => !freeIds.includes(id));
+                const mitIds = validSlots.filter(id => id.includes('-p5')); const ksIds = ['d1-p7', 'd1-p8']; const solFixedIds = ['d2-p7', 'd2-p8'];
+                const allFixedIds = [...mitIds, ...ksIds, ...solFixedIds];
+                let parallelPool = validSlots.filter(id => !allFixedIds.includes(id));
+                for (let i = parallelPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [parallelPool[i], parallelPool[j]] = [parallelPool[j], parallelPool[i]]; }
+                const wpfIds = parallelPool.slice(0, 4); const foeaIds = parallelPool.slice(4, 6); const allParallelIds = [...wpfIds, ...foeaIds];
+                let entriesCount = 0;
+                classes.forEach(cls => {
+                    mitIds.forEach(id => addEntry(id, "MEN", cls)); ksIds.forEach(id => addEntry(id, "KS", cls)); solFixedIds.forEach(id => addEntry(id, "SOL", cls));
+                    wpfIds.forEach(id => addEntry(id, "WPF", cls)); foeaIds.forEach(id => addEntry(id, "FÖA", cls));
+                    let bucket = []; for(let i=0; i<4; i++) bucket.push("MAT"); for(let i=0; i<4; i++) bucket.push("DEU"); for(let i=0; i<4; i++) bucket.push("ENG"); for(let i=0; i<3; i++) bucket.push("NAT"); for(let i=0; i<2; i++) bucket.push("GGP"); for(let i=0; i<2; i++) bucket.push("SPO"); bucket.push("RAT"); bucket.push("CARE"); bucket.push("IPAD"); bucket.push("SOL");
+                    const usedIds = [...allFixedIds, ...allParallelIds]; let mySlots = validSlots.filter(id => !usedIds.includes(id));
+                    for (let i = mySlots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [mySlots[i], mySlots[j]] = [mySlots[j], mySlots[i]]; }
+                    bucket.forEach((subj, idx) => { if (idx < mySlots.length) addEntry(mySlots[idx], subj, cls); });
+                    entriesCount += bucket.length + 9 + 6;
+                });
+                ensureZUP(); // Restore ZUP
+                renderTimetable(); updateLiveStats(); showToast(`Fertig! ${entriesCount} Einträge.`);
+            } catch (e) { showToast("Fehler: " + e.message, true); }
+        }
+        
+        function init() {
+            renderSubjects();
+            renderTimetable();
+            updateCursorVisuals();
+            renderClasses();
+            document.getElementById('classInput').focus();
+            ensureZUP(); // Ensure ZUP on init
+            updateLiveStats(); 
+            
+            // Setup persistent drag/pinch listeners
+            const body = document.getElementById('timetableBody');
+            body.addEventListener('touchstart', handleDragStart, { passive: false });
+            body.addEventListener('touchmove', handleDragMove, { passive: false });
+            body.addEventListener('touchend', handleDragEnd);
+            body.addEventListener('mousedown', handleDragStart);
+            window.addEventListener('mousemove', handleDragMove);
+            window.addEventListener('mouseup', handleDragEnd);
+            
+            // CHECK TOUR STATUS
+            if (!localStorage.getItem('stundenplan_tour_seen')) {
+                setTimeout(startTour, 800);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
